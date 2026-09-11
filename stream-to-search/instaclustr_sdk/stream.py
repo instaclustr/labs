@@ -22,6 +22,7 @@ _producer: Optional[Producer] = None
 _config: Optional[StreamConfig] = None
 
 EventLike = Union[Event, dict]
+"""What `publish()` accepts for each event: an `Event`, or a dict of `Event`'s fields."""
 
 
 def setup(bootstrap_servers: str = "localhost:29092", topic: str = "events", **producer_config):

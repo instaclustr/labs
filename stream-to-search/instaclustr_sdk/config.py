@@ -6,12 +6,16 @@ from dataclasses import dataclass
 
 @dataclass
 class StreamConfig:
+    """Kafka producer settings; `stream.setup()` builds one and returns it."""
+
     bootstrap_servers: str = "localhost:29092"
     topic: str = "events"
 
 
 @dataclass
 class SearchConfig:
+    """ClickHouse and async-consumer settings; `search.setup()` builds one and returns it."""
+
     host: str = "localhost"
     port: int = 8123
     username: str = "default"

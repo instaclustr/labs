@@ -26,7 +26,9 @@ class Event:
     metric: str
     value: float
     ts: datetime = field(default_factory=_now)
+    """When the measurement was taken; defaults to now. A naive datetime is taken as UTC."""
     event_id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    """Unique id, carried through to any `Anomaly` for this event; defaults to a random UUID."""
 
     def to_json_row(self) -> Dict[str, object]:
         """Serialize to a JSONEachRow-compatible dict matching the `events` table columns."""
@@ -48,7 +50,9 @@ class Anomaly:
     metric: str
     value: float
     ts: Union[datetime, str]
+    """UTC timestamp: a `datetime` from `find_anomalies()`, a string from the async topic."""
     zscore: float
+    """Standard deviations from the entity/metric's trailing mean; negative means below it."""
 
 
 @dataclass
@@ -59,4 +63,6 @@ class Watermark:
     """
 
     offsets: Dict[int, int] = field(default_factory=dict)
+    """Partition number -> the highest offset this batch wrote to it."""
     count: int = 0
+    """How many events Kafka acknowledged."""

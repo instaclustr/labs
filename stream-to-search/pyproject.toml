@@ -29,6 +29,9 @@ ai = ["pydantic-ai-slim[anthropic]>=2.42,<3", "voyageai>=0.3"]
 # installs as pydantic-ai-slim[<provider>]. Pick the model with INSTACLUSTR_SDK_AGENT_MODEL.
 openai = ["pydantic-ai-slim[openai]>=2.42,<3"]
 google = ["pydantic-ai-slim[google]>=2.42,<3"]
+# The API reference (scripts/docs.sh). pdoc imports what it documents, so install it alongside
+# [ai]: ".[ai,docs]".
+docs = ["pdoc>=16"]
 
 [tool.setuptools.packages.find]
 include = ["instaclustr_sdk*"]

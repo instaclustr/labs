@@ -28,6 +28,7 @@ from typing import Callable, List, Optional
 import clickhouse_connect
 
 EmbedFn = Callable[[str], List[float]]
+"""An embedder: takes one text and returns its embedding vector."""
 
 _client = None
 _embed: Optional[EmbedFn] = None
@@ -44,6 +45,7 @@ def hashing_embedder(dim: int = 256) -> EmbedFn:
     """Dependency-free fallback: L2-normalized hashed bag-of-words. Low quality but offline."""
 
     def embed(text: str) -> List[float]:
+        """Return the L2-normalized hashed bag-of-words vector for `text`."""
         vec = [0.0] * dim
         for tok in _TOKEN.findall(text.lower()):
             idx = int(hashlib.md5(tok.encode()).hexdigest(), 16) % dim
@@ -67,12 +69,18 @@ def voyage_embedder(
     vo = voyageai.Client(api_key=api_key)
 
     def embed(text: str) -> List[float]:
+        """Return Voyage's embedding of `text` (one API call)."""
         return vo.embed([text], model=model, input_type=input_type).embeddings[0]
 
     return embed
 
 
 def default_embedder(input_type: str = "document") -> EmbedFn:
+    """The embedder `setup()` uses when given none.
+
+    Voyage (`voyage_embedder` with this `input_type`) if VOYAGE_API_KEY is set and `voyageai`
+    imports; otherwise, silently, the local `hashing_embedder()`.
+    """
     if os.environ.get("VOYAGE_API_KEY"):
         try:
             return voyage_embedder(api_key=os.environ["VOYAGE_API_KEY"], input_type=input_type)
@@ -120,6 +128,12 @@ def _require():
 
 @dataclass
 class Doc:
+    """One `retrieve()` result: a stored document and its cosine distance to the query.
+
+    `kind` is 'domain' or 'finding'; `entity` and `metric` are empty when the document isn't
+    tied to one. A lower `distance` is closer.
+    """
+
     text: str
     kind: str
     entity: str

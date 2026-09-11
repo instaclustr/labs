@@ -9,6 +9,7 @@
 | AI agent (`instaclustr_sdk.agent`, demo step 4) | `pip install -e ".[ai]"`, plus a [provider extra](#other-model-providers) for a non-Anthropic model | `pydantic-ai-slim[anthropic]` (+ the provider's) | — (calls the model provider's API) | `ANTHROPIC_API_KEY` for the default model, else the provider's key |
 | Live dashboard | nothing; Grafana starts with the stack | — | Grafana + ClickHouse plugin | — |
 | Tests | `pip install -e ".[ai,dev]"` | `pytest` | none for unit tests; the stack for integration tests | a configured model for the live agent test (as for the AI agent row) |
+| API reference (`scripts/docs.sh`) | `pip install -e ".[ai,docs]"` | `pdoc` | — | — |
 
 ## System prerequisites
 
@@ -44,6 +45,15 @@ Declared in `pyproject.toml`.
 |---|---|---|---|
 | `pytest` | `>=7` | MIT | Runs the offline unit tests (`test_agent.py` needs `[ai]`; `test_rag.py` and `test_search.py` don't) and `tests/test_end_to_end.py` (integration; needs the live stack, and a model for its agent test). |
 | `pydantic-ai-slim[openai]` | `>=2.42,<3` | MIT (brings `openai`, Apache-2.0) | Lets the cross-provider request-shape test in `test_agent.py` run. |
+
+### `[docs]` extra
+
+| Package | Version | License | Purpose |
+|---|---|---|---|
+| `pdoc` | `>=16` | MIT-0 (brings Jinja2, MarkupSafe, and Pygments, BSD; `markdown2`, MIT) | Renders the API reference from the docstrings (`scripts/docs.sh`). It imports every module it documents, so it's installed alongside `[ai]`. |
+
+Don't confuse it with `pdoc3`, a separate fork that is AGPL-3.0 and installs under the same `pdoc`
+import name.
 
 ### Other model providers
 
@@ -99,10 +109,10 @@ Kafka (`kafka:9092` on the compose network). No connector/service to install.
 
 This project is licensed under **Apache-2.0** (see [`LICENSE`](LICENSE)).
 
-Every direct Python dependency is permissive (Apache-2.0 or MIT), and so are almost all transitive
-ones (BSD, ISC, and PSF as well). The exceptions are MPL-2.0, a weak, file-level copyleft:
-`certifi` (via `clickhouse-connect`), plus `orjson` and `tqdm` (via `voyageai`); the `[openai]`
-and `[google]` provider extras add only permissive packages. Using and
+Every direct Python dependency is permissive (Apache-2.0, MIT, or MIT-0), and so are almost all
+transitive ones (BSD, ISC, and PSF as well). The exceptions are MPL-2.0, a weak, file-level
+copyleft: `certifi` (via `clickhouse-connect`), plus `orjson` and `tqdm` (via `voyageai`); the
+`[openai]`, `[google]`, and `[docs]` extras add only permissive packages. Using and
 redistributing them unmodified is fine; MPL obligations apply only to changes you make to those
 files. Among the infrastructure images, **Grafana is AGPL-3.0** — the only strong-copyleft
 component. It's optional (nothing in the SDK depends on it) and using it locally is fine; AGPL

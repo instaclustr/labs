@@ -37,13 +37,15 @@ from pydantic_ai.toolsets import FunctionToolset
 from . import detection, rag, search
 
 DEFAULT_MODEL = "anthropic:claude-opus-5"
+"""The model `setup()` uses when it gets none and `MODEL_ENV_VAR` is unset."""
 
-# Names the model when setup() gets none, e.g. "openai:gpt-5.2" (any Pydantic AI model name).
 MODEL_ENV_VAR = "INSTACLUSTR_SDK_AGENT_MODEL"
+"""Names the model when `setup()` gets none, e.g. "openai:gpt-5.2" (any Pydantic AI model name)."""
 
 # Pydantic AI's Anthropic default is 4096, which adaptive thinking can use up before the
 # answer; 16000 stays within non-streaming request timeouts.
 DEFAULT_MODEL_SETTINGS: ModelSettings = {"max_tokens": 16000}
+"""Settings every run starts from; `setup(model_settings=...)` is merged over them."""
 
 INSTRUCTIONS = f"""You are an anomaly-analysis assistant for a real-time streaming metrics platform.
 
@@ -55,6 +57,7 @@ seasonality, or a cold start with little history.
 
 Judge each flagged point using the domain context and past findings you are given (or can \
 retrieve). Be concise and decisive."""
+"""The agent's instructions, shared by `explain_anomaly` and `investigate_anomaly`."""
 
 
 class Verdict(BaseModel):
@@ -76,6 +79,7 @@ class Verdict(BaseModel):
 # one ClickHouse client, and ClickHouse runs one query at a time per session.
 
 tools = FunctionToolset()
+"""The tools `investigate_anomaly` offers the model: `get_metric_stats` and `search_knowledge`."""
 
 
 @tools.tool_plain(sequential=True)

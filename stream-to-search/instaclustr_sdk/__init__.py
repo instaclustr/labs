@@ -2,6 +2,10 @@
 
     import instaclustr_sdk.stream as stream
     import instaclustr_sdk.search as search
+
+The AI layer is imported on its own: `instaclustr_sdk.agent` (needs the `[ai]` extra) explains
+anomalies, grounded in the `instaclustr_sdk.rag` knowledge base. `import instaclustr_sdk` loads
+neither, so the core needs no AI packages.
 """
 from __future__ import annotations
 

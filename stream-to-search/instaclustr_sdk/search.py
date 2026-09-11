@@ -216,6 +216,7 @@ class Subscription:
         self._thread = thread
 
     def stop(self, timeout: float = 2.0) -> None:
+        """Stop the background consumer, waiting up to `timeout` seconds for it to close."""
         self._stop.set()
         self._thread.join(timeout)
 

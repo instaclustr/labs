@@ -13,7 +13,10 @@ from __future__ import annotations
 from typing import Dict, Optional, Tuple
 
 DEFAULT_THRESHOLD = 3.0
+"""How many standard deviations from the mean make a point anomalous."""
+
 DEFAULT_WINDOW = "1 HOUR"
+"""The trailing interval that the mean and standard deviation cover."""
 
 
 def zscore_sql(
