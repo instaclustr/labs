@@ -6,13 +6,14 @@ identically-looking (both high z-scores):
   * sensor-1: a single 95 C spike        -> benign (a disconnect)
   * sensor-2: a sustained ~34 C stretch  -> genuine (real overheating)
 
-We seed the RAG knowledge base with the domain rules that tell them apart, then let Claude
+We seed the RAG knowledge base with the domain rules that tell them apart, then let the model
 judge each one. Watch the two verdicts diverge — that's the AI layer earning its keep.
 
 Each run uses a fresh fleet (sensor-1-<run id>, ...), so readings left by earlier steps don't
 leak into this one's per-sensor statistics.
 
-Run (needs `pip install -e ".[ai]"` and ANTHROPIC_API_KEY):
+Run (needs `pip install -e ".[ai]"` and a model: ANTHROPIC_API_KEY for the default Claude
+model, or INSTACLUSTR_SDK_AGENT_MODEL plus that provider's key):
     python demo/04_explain_with_ai.py
 """
 import uuid
@@ -33,7 +34,7 @@ def main() -> None:
     stream.setup()
     search.setup()
     rag.setup()    # local embedder unless VOYAGE_API_KEY is set
-    agent.setup()  # uses ANTHROPIC_API_KEY
+    agent.setup()  # Claude Opus 5, unless INSTACLUSTR_SDK_AGENT_MODEL names another model
 
     # 1. Seed domain knowledge: what is / isn't a real anomaly for these sensors.
     rag.add_knowledge(
@@ -69,7 +70,7 @@ def main() -> None:
         print(agent.explain_anomaly(spike, remember=True))
         print()
 
-    # 4. Investigate the overheating (agentic — Claude pulls stats + searches memory via tools).
+    # 4. Investigate the overheating (agentic — the model pulls stats + searches memory via tools).
     heat = first_for(anomalies, overheating)
     if heat:
         print(f"=== {overheating} (sustained ~34 C) — investigate_anomaly ===")

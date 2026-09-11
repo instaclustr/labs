@@ -6,7 +6,8 @@ Require the full stack running and are skipped unless RUN_INTEGRATION=1:
     pip install -e ".[ai,dev]"
     RUN_INTEGRATION=1 pytest
 
-The agent test additionally needs ANTHROPIC_API_KEY and makes live Claude calls (cents).
+The agent test additionally needs a model and makes live calls (cents): ANTHROPIC_API_KEY for
+the default Claude model, or INSTACLUSTR_SDK_AGENT_MODEL plus that provider's key.
 scripts/smoke_test.sh runs all of this against a fresh stack.
 """
 import os
@@ -77,8 +78,9 @@ def test_async_anomaly_reaches_kafka_topic():
 
 
 @pytest.mark.skipif(
-    not os.environ.get("ANTHROPIC_API_KEY"),
-    reason="live agent test; needs ANTHROPIC_API_KEY (makes real Claude calls)",
+    not (os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("INSTACLUSTR_SDK_AGENT_MODEL")),
+    reason="live agent test; needs ANTHROPIC_API_KEY, or INSTACLUSTR_SDK_AGENT_MODEL plus that "
+    "provider's key (makes real model calls)",
 )
 def test_agent_returns_typed_verdicts_and_remembers_them():
     pytest.importorskip("pydantic_ai")

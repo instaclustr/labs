@@ -1,5 +1,8 @@
 # Architecture
 
+How `stream-to-search` is put together: the components, how data flows through them, and the
+design decisions behind the two detection flows and the AI layer. For a hands-on tour, see [`demo/README.md`](demo/README.md).
+
 ## 1. Overview
 
 The system demonstrates a seamless path from **event streaming** (Kafka) to **search & analytics**
@@ -18,7 +21,7 @@ SDK talks to.
 | **`instaclustr_sdk.stream`** | Kafka producer — sync + async publish | `instaclustr_sdk/stream.py` |
 | **`instaclustr_sdk.search`** | ClickHouse queries + anomalies-topic consumer + `metric_stats` | `instaclustr_sdk/search.py` |
 | **`instaclustr_sdk.detection`** | the z-score detection SQL (source of truth for the sync path) | `instaclustr_sdk/detection.py` |
-| **`instaclustr_sdk.agent`** | AI analysis of anomalies via Claude, on Pydantic AI; returns a typed `Verdict` | `instaclustr_sdk/agent.py` |
+| **`instaclustr_sdk.agent`** | AI analysis of anomalies via an LLM (Claude by default), on Pydantic AI; returns a typed `Verdict` | `instaclustr_sdk/agent.py` |
 | **`instaclustr_sdk.rag`** | vector memory (domain context + past findings) in ClickHouse | `instaclustr_sdk/rag.py` |
 | **`instaclustr_sdk.models` / `instaclustr_sdk.config`** | `Event`/`Anomaly`/`Watermark`; config dataclasses | `instaclustr_sdk/models.py`, `config.py` |
 | **Kafka** | event transport; topics `events` and `anomalies` | single-node KRaft |
@@ -91,14 +94,14 @@ ClickHouse's Kafka table engine consumes them and a materialized view lands them
 ```
   Anomaly ─▶ instaclustr_sdk.agent.explain_anomaly / investigate_anomaly
                      │                         │
-      retrieve ◀─────┤                         ├──▶ Pydantic AI Agent ──▶ Claude (Opus 5, adaptive thinking)
+      retrieve ◀─────┤                         ├──▶ Pydantic AI Agent ──▶ any provider's model (default: Claude Opus 5)
                      ▼                         │      ▲   tools (investigate_anomaly only):
         instaclustr_sdk.rag (knowledge table,  │      ├── search.metric_stats(entity, metric)
         cosineDistance search)  ◀── add_knowledge / add_finding
 ```
 
-- `explain_anomaly` retrieves relevant context from `rag` and asks Claude once (grounded generation).
-- `investigate_anomaly` gives Claude tools (`metric_stats`, `rag.retrieve`) and lets it drive the
+- `explain_anomaly` retrieves relevant context from `rag` and asks the model once (grounded generation).
+- `investigate_anomaly` gives the model tools (`metric_stats`, `rag.retrieve`) and lets it drive the
   loop — deciding what evidence to gather before ruling.
 - Both are runs of one Pydantic AI agent (the second with the toolset) and return a typed
   `Verdict`: `genuine` / `benign` / `uncertain`, plus cause and recommended action.
@@ -171,7 +174,7 @@ start. Grafana auto-provisions its datasource + dashboard from `grafana/`.
 - **AI at the right altitude.** `explain_anomaly` is a single call (analysis is a single-call task);
   `investigate_anomaly` is the genuinely agentic path where tools earn their keep.
 - **Pydantic AI for the model-facing half only.** `instaclustr_sdk` owns Kafka and ClickHouse;
-  Pydantic AI owns every model call, and two functions exposed as tools are the only crossing. 
+  Pydantic AI owns every model call, and two functions exposed as tools are the only crossing.
 
 ## 8. Extensibility & scaling
 
@@ -182,8 +185,10 @@ start. Grafana auto-provisions its datasource + dashboard from `grafana/`.
   Quantiles, moving averages, and `seriesDecomposeSTL` are all native to ClickHouse.
 - **Different domain knowledge:** seed your own `rag.add_knowledge(...)` rules for your metrics;
   `demo/04_explain_with_ai.py` shows the pattern.
-- **Different model or provider:** `agent.setup(model=...)` accepts any Pydantic AI model name or
-  `Model` instance.
+- **Different model or provider:** set `INSTACLUSTR_SDK_AGENT_MODEL` (e.g. `openai:gpt-5.2`) or
+  pass any Pydantic AI model name or `Model` to `agent.setup(model=...)`; each provider's extra and
+  key are in [`DEPENDENCIES.md`](DEPENDENCIES.md#other-model-providers). Passing a Pydantic AI
+  `FallbackModel` fails over between providers.
 - **Scale out:** add Kafka partitions and ClickHouse replicas — the SDK API is unchanged (the
   watermark is already per-partition).
 - **More consumers:** anything can subscribe to the `anomalies` topic; the Python consumers are just
@@ -199,6 +204,6 @@ start. Grafana auto-provisions its datasource + dashboard from `grafana/`.
 - **RAG** brute-forces `cosineDistance` over a demo-sized table, and every row must come from the
   same embedder (§7).
 
-The two runtime assumptions, the async output-MV hop and live Claude calls through Pydantic AI, are
+The two runtime assumptions, the async output-MV hop and live model calls through Pydantic AI, are
 exercised end to end on a fresh stack by `scripts/smoke_test.sh`. The request the agent sends is
 also covered offline by `tests/test_agent.py`, against a mocked transport.

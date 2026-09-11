@@ -1,13 +1,14 @@
 """AI agent module — analyzes and explains anomalies found by the detection algorithm.
 
-A z-score flag is a statistical signal, not a verdict. This module uses Claude to judge
-whether a flagged point is a genuine anomaly worth attention or a benign artifact, grounded
-in the RAG knowledge base (domain context + past findings, see instaclustr_sdk/rag.py).
+A z-score flag is a statistical signal, not a verdict. This module uses an LLM (Claude by
+default, or any provider Pydantic AI supports) to judge whether a flagged point is a genuine
+anomaly worth attention or a benign artifact, grounded in the RAG knowledge base (domain
+context + past findings, see instaclustr_sdk/rag.py).
 
 Two entry points, both returning a typed `Verdict`:
 
     import instaclustr_sdk.agent as agent
-    agent.setup()                                   # Claude Opus 5; uses ANTHROPIC_API_KEY
+    agent.setup()             # Claude Opus 5, unless INSTACLUSTR_SDK_AGENT_MODEL names another model
 
     # single model request, augmented with retrieved RAG context
     verdict = agent.explain_anomaly(anomaly, remember=True)
@@ -23,6 +24,7 @@ entry points.
 """
 from __future__ import annotations
 
+import os
 from typing import Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel, Field
@@ -35,6 +37,9 @@ from pydantic_ai.toolsets import FunctionToolset
 from . import detection, rag, search
 
 DEFAULT_MODEL = "anthropic:claude-opus-5"
+
+# Names the model when setup() gets none, e.g. "openai:gpt-5.2" (any Pydantic AI model name).
+MODEL_ENV_VAR = "INSTACLUSTR_SDK_AGENT_MODEL"
 
 # Pydantic AI's Anthropic default is 4096, which adaptive thinking can use up before the
 # answer; 16000 stays within non-streaming request timeouts.
@@ -106,18 +111,20 @@ _agent: Optional[Agent] = None
 
 
 def setup(
-    model: Union[str, Model] = DEFAULT_MODEL,
+    model: Union[str, Model, None] = None,
     model_settings: Optional[ModelSettings] = None,
 ) -> Agent:
     """Build the agent. `model` is any Pydantic AI model name or `Model` instance.
 
-    The default reads ANTHROPIC_API_KEY. For other credentials or platforms (Bedrock, Vertex,
-    Foundry), pass a `Model` built on your own client. `model_settings` are merged over the
-    defaults, e.g. `{"max_tokens": 32000}`.
+    Without one, INSTACLUSTR_SDK_AGENT_MODEL names the model, else Claude Opus 5. A provider other
+    than Anthropic needs its Pydantic AI extra (e.g. `pip install "instaclustr-sdk[ai,openai]"`)
+    and its own credentials; the default reads ANTHROPIC_API_KEY. For custom clients or platforms
+    (Bedrock, Vertex, Foundry), pass a `Model` built on your own client. `model_settings` are
+    merged over the defaults, e.g. `{"max_tokens": 32000}`.
     """
     global _agent
     _agent = Agent(
-        model,
+        model or os.environ.get(MODEL_ENV_VAR) or DEFAULT_MODEL,
         output_type=Verdict,
         instructions=INSTRUCTIONS,
         model_settings={**DEFAULT_MODEL_SETTINGS, **(model_settings or {})},

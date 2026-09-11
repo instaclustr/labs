@@ -2,20 +2,21 @@
 # End-to-end smoke test, starting from a fresh stack:
 #   1. offline unit tests
 #   2. Kafka + ClickHouse from scratch, checking every object in clickhouse/init/*.sql exists
-#   3. the demo walkthrough, demo/01-04 (demo/04 only when ANTHROPIC_API_KEY is set); first, so
+#   3. the demo walkthrough, demo/01-04 (demo/04 only when a model is configured); first, so
 #      its unfiltered queries see only its own data
-#   4. integration tests (sync + async detection; the live agent test when ANTHROPIC_API_KEY is set)
+#   4. integration tests (sync + async detection; the live agent test when a model is configured)
 #
 # Usage:  scripts/smoke_test.sh [--keep] [--no-ai]
 #   --keep    leave the stack running afterwards
-#   --no-ai   skip the live Claude steps even when ANTHROPIC_API_KEY is set
+#   --no-ai   skip the live model calls even when a model is configured
 #
 # WARNING: step 2 runs `compose down -v`, which wipes any existing stack data.
 #
 # Needs `pip install -e ".[ai,dev]"` and either Docker (running, with the compose plugin) or
-# podman-compose. ANTHROPIC_API_KEY can come from the environment or a .env file at the repo
-# root; with it, steps 3 and 4 make a few live Claude calls (cents). Overrides: PYTHON
-# (default python3), COMPOSE (e.g. "podman-compose").
+# podman-compose. The AI steps need a model: ANTHROPIC_API_KEY for the default Claude model, or
+# INSTACLUSTR_SDK_AGENT_MODEL plus that provider's key and extra (e.g. ".[ai,dev,openai]"). Both
+# can come from the environment or a .env file at the repo root; with them, steps 3 and 4 make a
+# few live model calls (cents). Overrides: PYTHON (default python3), COMPOSE (e.g. "podman-compose").
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -54,13 +55,14 @@ read -ra compose <<<"$COMPOSE"
 case "$COMPOSE" in *podman*) runtime=podman ;; *) runtime=docker ;; esac
 
 if [[ -f .env ]]; then set -a; . ./.env; set +a; fi
-if ((ai)) && [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
+if ((ai)) && [[ -z "${ANTHROPIC_API_KEY:-}${INSTACLUSTR_SDK_AGENT_MODEL:-}" ]]; then
   ai=0
-  ai_skipped="no ANTHROPIC_API_KEY"
+  ai_skipped="no model: set ANTHROPIC_API_KEY, or INSTACLUSTR_SDK_AGENT_MODEL plus its provider's key"
 elif ((!ai)); then
   ai_skipped="--no-ai"
 fi
-((ai)) || unset ANTHROPIC_API_KEY  # so the live agent test skips too
+((ai)) || unset ANTHROPIC_API_KEY INSTACLUSTR_SDK_AGENT_MODEL  # so the live agent test skips too
+model="${INSTACLUSTR_SDK_AGENT_MODEL:-$("$python" -c 'import instaclustr_sdk.agent as a; print(a.DEFAULT_MODEL)')}"
 
 step "1/4 Unit tests (offline; the integration tests skip here and run in step 4)"
 "$python" -m pytest -q
@@ -100,6 +102,7 @@ done
 echo "ClickHouse objects:$tables"
 
 step "3/4 Demo walkthrough"
+if ((ai)); then echo "(the AI steps use $model)"; fi
 demo() {  # demo <script> <marker>...: require exit 0 and every marker in its output
   local script=$1 out
   shift

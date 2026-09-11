@@ -1,8 +1,9 @@
 """Offline unit tests for instaclustr_sdk.agent — no API key, Kafka, or ClickHouse needed.
 
 Pydantic AI's TestModel stands in for the model: it calls every tool a run offers, then
-returns schema-valid structured output. The request-shape test runs the real Anthropic
-client against a mocked HTTP transport. Needs the [ai] extra; skipped without it.
+returns schema-valid structured output. The request-shape tests run the real Anthropic and
+OpenAI clients against a mocked HTTP transport. Needs the [ai] extra (and [dev] for OpenAI);
+skipped without it.
 """
 import json
 
@@ -62,6 +63,22 @@ def test_calls_before_setup_raise():
         agent.explain_anomaly(ANOMALY)
 
 
+def test_setup_takes_the_model_from_the_environment(monkeypatch):
+    monkeypatch.setenv(agent.MODEL_ENV_VAR, "test")  # Pydantic AI's name for TestModel
+
+    agent.setup()
+
+    assert isinstance(agent.explain_anomaly(ANOMALY), agent.Verdict)
+
+
+def test_an_explicit_model_beats_the_environment(monkeypatch):
+    monkeypatch.setenv(agent.MODEL_ENV_VAR, "no-such-provider:no-such-model")
+
+    agent.setup(TestModel())
+
+    assert isinstance(agent.explain_anomaly(ANOMALY), agent.Verdict)
+
+
 def test_investigate_uses_both_tools_and_returns_verdict(backends):
     agent.setup(TestModel())
 
@@ -116,3 +133,66 @@ def test_default_settings_reach_the_anthropic_request(monkeypatch, backends):
     assert {t["name"] for t in investigate["tools"]} == {
         "get_metric_stats", "search_knowledge", "final_result",
     }
+
+
+VERDICT_ARGS = json.dumps({"verdict": "benign", "cause": "disconnect", "action": "ignore"})
+
+
+def _openai_responses_reply(n):
+    return {"id": f"resp_{n}", "object": "response", "created_at": 0, "model": "gpt-5.2",
+            "status": "completed", "parallel_tool_calls": True, "tool_choice": "auto", "tools": [],
+            "output": [{"type": "function_call", "id": f"fc_{n}", "call_id": f"call_{n}",
+                        "name": "final_result", "arguments": VERDICT_ARGS, "status": "completed"}],
+            "usage": {"input_tokens": 1, "output_tokens": 1, "total_tokens": 2,
+                      "input_tokens_details": {"cached_tokens": 0},
+                      "output_tokens_details": {"reasoning_tokens": 0}}}
+
+
+def _openai_chat_reply(n):
+    return {"id": f"chat_{n}", "object": "chat.completion", "created": 0, "model": "gpt-4.1",
+            "choices": [{"index": 0, "finish_reason": "tool_calls", "message": {
+                "role": "assistant", "content": None, "tool_calls": [{
+                    "id": f"call_{n}", "type": "function",
+                    "function": {"name": "final_result", "arguments": VERDICT_ARGS}}]}}],
+            "usage": {"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2}}
+
+
+@pytest.mark.parametrize(
+    "api, model_name, reasoning",
+    [
+        ("responses", "gpt-5.2", {"effort": "high"}),  # a reasoning model gets the effort
+        ("chat", "gpt-4.1", None),  # a non-reasoning model gets no reasoning parameter
+    ],
+)
+def test_default_settings_reach_openai_requests(monkeypatch, backends, api, model_name, reasoning):
+    pytest.importorskip("openai")
+    from openai import AsyncOpenAI
+    from pydantic_ai.models.openai import OpenAIChatModel, OpenAIResponsesModel
+    from pydantic_ai.providers.openai import OpenAIProvider
+
+    monkeypatch.setattr(models, "ALLOW_MODEL_REQUESTS", True)  # the transport below is mocked
+    bodies = []
+
+    def handler(request):
+        bodies.append(json.loads(request.content))
+        reply = _openai_responses_reply if api == "responses" else _openai_chat_reply
+        return httpx2.Response(200, json=reply(len(bodies)))
+
+    client = AsyncOpenAI(api_key="test", max_retries=0,
+                         http_client=httpx2.AsyncClient(transport=httpx2.MockTransport(handler)))
+    model_class = OpenAIResponsesModel if api == "responses" else OpenAIChatModel
+    agent.setup(model_class(model_name, provider=OpenAIProvider(openai_client=client)))
+
+    assert agent.explain_anomaly(ANOMALY).verdict == "benign"
+    assert agent.investigate_anomaly(ANOMALY).verdict == "benign"
+
+    explain, investigate = bodies
+    assert explain.get("reasoning") == reasoning
+    assert "reasoning_effort" not in explain
+    assert explain.get("max_output_tokens", explain.get("max_completion_tokens")) == 16000
+
+    def tool_names(body):
+        return {t.get("name") or t["function"]["name"] for t in body["tools"]}
+
+    assert tool_names(explain) == {"final_result"}
+    assert tool_names(investigate) == {"get_metric_stats", "search_knowledge", "final_result"}

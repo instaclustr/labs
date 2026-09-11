@@ -1,7 +1,7 @@
 # Controlled environment for the streaming-to-search demo.
 #   - Kafka: single-node KRaft (no ZooKeeper) with dual listeners:
 #       * kafka:9092       -> reachable from the ClickHouse container (docker network)
-#       * localhost:29092  -> reachable from the host (Python SDK / examples)
+#       * localhost:29092  -> reachable from the host (Python SDK / demo)
 #   - ClickHouse: auto-runs the DDL in ./clickhouse/init on first start.
 # Images are fully qualified (docker.io/...) so Podman resolves them without prompting.
 services:

@@ -2,88 +2,89 @@
 
 A controlled, demo-able environment showing a **seamlessly simple developer experience**
 for problems that need both **real-time event streaming** (Kafka) and **search & analytics**
-(ClickHouse). The flagship use case is **anomaly detection**, with an AI layer that explains the
+(ClickHouse). The flagship use case is **anomaly detection**, with an AI agent that explains the
 anomalies it finds.
+
+Using it looks like this, once the [Installing](#installing) below has the stack running:
 
 ```python
 import instaclustr_sdk.stream as stream
 import instaclustr_sdk.search as search
+import instaclustr_sdk.rag as rag
+import instaclustr_sdk.agent as agent
 
 stream.setup(bootstrap_servers="localhost:29092")
 search.setup(host="localhost", port=8123)
+rag.setup() # Domain knowledge
+agent.setup() 
 
 wm = stream.publish(my_events)                 # onto Kafka
 anomalies = search.find_anomalies(wait_for=wm) # out of ClickHouse
+
+rag.add_knowledge("Spikes above 90C on sensor-1 are disconnects, not real heat.",
+                  kind="domain", entity="sensor-1", metric="temperature")
+
+anomaly = anomalies[0]                                    # a hit from search.find_anomalies() above
+verdict = agent.explain_anomaly(anomaly, remember=True)  # one call + retrieved context; stores the finding
+verdict = agent.investigate_anomaly(anomaly)             # agentic: the model calls metric-stats + memory-search tools
+verdict.verdict                                           # "genuine" | "benign" | "uncertain"
 ```
 
 > **New here? Start with the guided walkthrough: [`demo/README.md`](demo/README.md)** — it builds
 > a full anomaly-detection app step by step (publish → sync detect → async detect → AI-explained findings).
 
-## Two flows, one pipeline
+## Installing
+
+You need **Python 3.10+** and a container runtime with Compose:
+[Docker with Docker Compose](https://docs.docker.com/compose/install/), or
+[Podman](https://podman.io/docs/installation) with
+[`podman-compose`](https://pypi.org/project/podman-compose/) (`pip install podman-compose`). With
+Podman, use `podman-compose` and `podman exec` wherever the commands below say `docker compose` and
+`docker exec`.
+
+```bash
+# from the repo root
+# 1. Install the Python dependencies into a virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[ai]"                           # the SDK plus the AI agent and RAG extras
+
+# 2. Start Kafka + ClickHouse (+ Grafana)
+docker compose up -d
+curl -s localhost:8123/ping                      # -> Ok. once it's ready
+```
+
+Other installs: `pip install -e .` for just the core SDK (streaming and detection, no AI),
+`".[ai,dev]"` to run the [tests](#tests), and `".[ai,openai]"` or `".[ai,google]"` to run the
+agent on [another model provider](DEPENDENCIES.md#other-model-providers).
+[`DEPENDENCIES.md`](DEPENDENCIES.md) lists every package, image, and credential.
+
+## Using the SDK
+
+### Data flows
 
 Ingestion is identical for both. Only the *detection & delivery* path differs.
 
 | | Synchronous (demo) | Asynchronous (production) |
 |---|---|---|
-| Publish | `stream.publish(events)` — blocks until acked | `await stream.publish_async(events)` — non-blocking |
-| Detect | `search.find_anomalies(wait_for=wm)` — waits for the batch to be queryable, then runs detection **on demand** | ClickHouse **refreshable materialized view** detects continuously and republishes to a Kafka topic |
+| Publish | blocks until acked | non-blocking |
+| Detect | waits for the batch to be queryable, then runs detection **on demand** | ClickHouse **refreshable materialized view** detects continuously and republishes to a Kafka topic |
 | Consume | return value (`list[Anomaly]`) | `async for a in search.stream_anomalies()` **and/or** `search.on_anomaly(cb)` |
 
 How the pieces fit — the pipeline, the offset watermark that makes the sync flow deterministic, and
 each flow's caveats — is in [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
-## AI agent + RAG
+### AI agent + RAG
 
-A z-score flag is a statistical signal, not a verdict. The AI layer has Claude, driven by
-[Pydantic AI](https://github.com/pydantic/pydantic-ai), judge whether a flagged point is a genuine
-anomaly or a benign artifact, grounded in a RAG knowledge base stored in ClickHouse.
+A z-score flag is a statistical signal, not a verdict. The AI layer has an LLM (Claude by
+default, or any provider [Pydantic AI](https://github.com/pydantic/pydantic-ai) supports) judge
+whether a flagged point is a genuine anomaly or a benign artifact, grounded in a RAG knowledge base
+stored in ClickHouse.
 
-```python
-import instaclustr_sdk.rag as rag
-import instaclustr_sdk.agent as agent
+How it works: [`ARCHITECTURE.md`](ARCHITECTURE.md) §3c. Using OpenAI, Gemini, Ollama, or another
+provider: [`DEPENDENCIES.md`](DEPENDENCIES.md#other-model-providers). 
 
-rag.setup()        # local embedder unless VOYAGE_API_KEY is set
-agent.setup()      # Claude Opus 5 via Pydantic AI; uses ANTHROPIC_API_KEY
-
-rag.add_knowledge("Spikes above 90C on sensor-1 are disconnects, not real heat.",
-                  kind="domain", entity="sensor-1", metric="temperature")
-
-verdict = agent.explain_anomaly(anomaly, remember=True)  # one call + retrieved context; stores the finding
-verdict = agent.investigate_anomaly(anomaly)             # agentic: Claude calls metric-stats + memory-search tools
-verdict.verdict                                           # "genuine" | "benign" | "uncertain"
-```
-
-How it works: [`ARCHITECTURE.md`](ARCHITECTURE.md) §3c.
-
-## Quickstart
-
-Needs Python 3.10+ and Docker Compose or podman-compose; [`DEPENDENCIES.md`](DEPENDENCIES.md) has
-the details. With Podman, use `podman-compose` and `podman exec` wherever the commands below say
-`docker compose` and `docker exec`.
-
-```bash
-# 1. Start Kafka + ClickHouse (+ Grafana)
-docker compose up -d
-curl -s localhost:8123/ping                      # -> Ok. once it's ready
-
-# 2. Install the SDK with the AI extras
-pip install -e ".[ai]"
-
-# 3. Run the examples
-python examples/demo_sync.py                     # publish, then detect synchronously
-python examples/prod_async.py                    # continuous async flow (Ctrl-C to stop)
-export ANTHROPIC_API_KEY=...                     # for the agent; VOYAGE_API_KEY optionally improves RAG
-python examples/agent_explain.py                 # detect -> explain -> remember
-
-# (optional) watch the raw anomalies topic
-docker exec s2s-kafka /opt/kafka/bin/kafka-console-consumer.sh \
-  --topic anomalies --bootstrap-server localhost:29092 --from-beginning
-```
-
-An optional live dashboard runs at http://localhost:3000; Step 3 of
-[`demo/README.md`](demo/README.md) shows it in action.
-
-### Tests
+## Tests
 
 ```bash
 pip install -e ".[ai,dev]"
@@ -93,33 +94,9 @@ scripts/smoke_test.sh            # everything, from a fresh stack (wipes stack d
 ```
 
 The smoke test starts Kafka + ClickHouse from scratch, then runs the unit tests, the demo
-walkthrough, and the integration tests. With `ANTHROPIC_API_KEY` set (in the environment or a
-`.env` file) it also makes a few cents of live Claude calls; `--no-ai` skips them.
-
-## Layout
-
-```
-docker-compose.yml           Kafka (KRaft, single node) + ClickHouse + optional Grafana
-clickhouse/init/             DDL auto-run on first ClickHouse start
-  01_events.sql              events table + Kafka engine + ingestion MV
-  02_anomalies.sql           anomalies table + refreshable detect MV + Kafka output MV
-  03_knowledge.sql           RAG knowledge base (vector-embedded domain context + findings)
-instaclustr_sdk/
-  stream.py                  setup(), publish() [sync], publish_async()
-  search.py                  setup(), find_anomalies() [sync], stream_anomalies()/on_anomaly(), metric_stats()
-  detection.py               the z-score detection SQL (source of truth for the sync path)
-  agent.py                   AI agent on Pydantic AI: explain_anomaly() [single call], investigate_anomaly() [agentic] -> Verdict
-  rag.py                     RAG memory over ClickHouse: add_knowledge/add_finding/retrieve
-  models.py                  Event, Anomaly, Watermark
-  config.py                  StreamConfig / SearchConfig
-examples/                    demo_sync.py, prod_async.py, agent_explain.py
-demo/                        guided step-by-step walkthrough (start here)
-grafana/                     optional live dashboard (datasource + dashboard provisioning)
-tests/                       test_agent.py, test_rag.py, test_search.py (offline); test_end_to_end.py (RUN_INTEGRATION=1)
-scripts/smoke_test.sh        fresh stack + demos + all tests, end to end
-ARCHITECTURE.md              how it works: data flow, design decisions, extending it, limitations & caveats
-DEPENDENCIES.md              Python packages, container images, credentials, licensing
-```
+walkthrough, and the integration tests. With a model configured (`ANTHROPIC_API_KEY`, or
+`INSTACLUSTR_SDK_AGENT_MODEL` plus its provider's key, in the environment or a `.env` file) it also
+makes a few cents of live model calls; `--no-ai` skips them.
 
 ## License
 

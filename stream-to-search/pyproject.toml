@@ -18,11 +18,17 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=7"]
-# AI agent + RAG. pydantic-ai (with its Anthropic extra) drives the model calls in
-# instaclustr_sdk.agent; voyageai is an optional (better) embedder for instaclustr_sdk.rag — it falls back to
-# a local embedder without it. 
+# pytest, plus the OpenAI SDK so the cross-provider agent test always runs.
+dev = ["pytest>=7", "pydantic-ai-slim[openai]>=2.42,<3"]
+# AI agent + RAG. pydantic-ai (with its Anthropic extra, for the default model) drives the model
+# calls in instaclustr_sdk.agent; voyageai is an optional (better) embedder for
+# instaclustr_sdk.rag — it falls back to a local embedder without it.
 ai = ["pydantic-ai-slim[anthropic]>=2.42,<3", "voyageai>=0.3"]
+# Other model providers for the agent, installed alongside [ai], e.g. ".[ai,openai]". [openai]
+# also covers OpenAI-compatible servers such as Ollama; any other provider Pydantic AI supports
+# installs as pydantic-ai-slim[<provider>]. Pick the model with INSTACLUSTR_SDK_AGENT_MODEL.
+openai = ["pydantic-ai-slim[openai]>=2.42,<3"]
+google = ["pydantic-ai-slim[google]>=2.42,<3"]
 
 [tool.setuptools.packages.find]
 include = ["instaclustr_sdk*"]
