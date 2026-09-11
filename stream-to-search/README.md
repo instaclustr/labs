@@ -15,19 +15,23 @@ import instaclustr_sdk.agent as agent
 
 stream.setup(bootstrap_servers="localhost:29092")
 search.setup(host="localhost", port=8123)
-rag.setup() # Domain knowledge
+rag.setup()
 agent.setup() 
 
+# Stream events
 wm = stream.publish(my_events)                 # onto Kafka
+
+# Search anomalies
 anomalies = search.find_anomalies(wait_for=wm) # out of ClickHouse
 
+# Agent investigates
 rag.add_knowledge("Spikes above 90C on sensor-1 are disconnects, not real heat.",
                   kind="domain", entity="sensor-1", metric="temperature")
 
-anomaly = anomalies[0]                                    # a hit from search.find_anomalies() above
-verdict = agent.explain_anomaly(anomaly, remember=True)  # one call + retrieved context; stores the finding
-verdict = agent.investigate_anomaly(anomaly)             # agentic: the model calls metric-stats + memory-search tools
-verdict.verdict                                           # "genuine" | "benign" | "uncertain"
+anomaly = anomalies[0]                                  # a hit from search.find_anomalies() above
+verdict = agent.explain_anomaly(anomaly, remember=True) # one call + retrieved context; stores the finding
+verdict = agent.investigate_anomaly(anomaly)            # the model calls metric-stats + memory-search tools
+verdict.verdict                                         # "genuine" | "benign" | "uncertain"
 ```
 
 > **New here? Start with the guided walkthrough: [`demo/README.md`](demo/README.md)** — it builds
@@ -54,9 +58,11 @@ docker compose up -d
 curl -s localhost:8123/ping                      # -> Ok. once it's ready
 ```
 
-Other installs: `pip install -e .` for just the core SDK (streaming and detection, no AI),
-`".[ai,dev]"` to run the [tests](#tests), and `".[ai,openai]"` or `".[ai,google]"` to run the
-agent on [another model provider](DEPENDENCIES.md#other-model-providers).
+Other installs: 
+- `pip install -e .` for just the core SDK (streaming and detection, no AI),
+- `".[ai,dev]"` to run the [tests](#tests), and 
+- `".[ai,openai]"` or `".[ai,google]"` to run the agent on [another model provider](DEPENDENCIES.md#other-model-providers).
+
 [`DEPENDENCIES.md`](DEPENDENCIES.md) lists every package, image, and credential.
 
 ## Using the SDK
