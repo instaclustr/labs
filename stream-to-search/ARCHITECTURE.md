@@ -1,9 +1,5 @@
 # Architecture
 
-How `stream-to-search` is put together: the components, how data flows through them, and the
-design decisions behind the two detection flows and the AI layer. For *what* it's for, see
-[`Purpose.md`](Purpose.md); for a hands-on tour, see [`demo/README.md`](demo/README.md).
-
 ## 1. Overview
 
 The system demonstrates a seamless path from **event streaming** (Kafka) to **search & analytics**
@@ -175,8 +171,7 @@ start. Grafana auto-provisions its datasource + dashboard from `grafana/`.
 - **AI at the right altitude.** `explain_anomaly` is a single call (analysis is a single-call task);
   `investigate_anomaly` is the genuinely agentic path where tools earn their keep.
 - **Pydantic AI for the model-facing half only.** `instaclustr_sdk` owns Kafka and ClickHouse;
-  Pydantic AI owns every model call, and two functions exposed as tools are the only crossing. The
-  reasoning and trade-offs are in [`design/pydantic-ai-agent.md`](design/pydantic-ai-agent.md).
+  Pydantic AI owns every model call, and two functions exposed as tools are the only crossing. 
 
 ## 8. Extensibility & scaling
 

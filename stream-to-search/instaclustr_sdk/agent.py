@@ -19,7 +19,7 @@ Requires the `[ai]` extra (`pip install "instaclustr-sdk[ai]"`). The model loop,
 structured output belong to Pydantic AI; this module only supplies the instructions, the
 `Verdict` schema, and two tools that reach back into instaclustr_sdk.search and instaclustr_sdk.rag. `setup()`
 accepts any Pydantic AI model and returns the underlying `Agent` for anything beyond these
-entry points. See design/pydantic-ai-agent.md.
+entry points.
 """
 from __future__ import annotations
 

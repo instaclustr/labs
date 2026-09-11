@@ -39,7 +39,7 @@ Declared in `pyproject.toml`.
 
 | Package | Version | License | Used by | Purpose |
 |---|---|---|---|---|
-| `pydantic-ai-slim[anthropic]` | `>=2.42,<3` | MIT (brings `anthropic` 1.x, MIT) | `agent` | Agent loop, tool calling, typed `Verdict` output, and the Claude client. Pinned below 3 because v2 moves fast. See [`design/pydantic-ai-agent.md`](design/pydantic-ai-agent.md). |
+| `pydantic-ai-slim[anthropic]` | `>=2.42,<3` | MIT (brings `anthropic` 1.x, MIT) | `agent` | Agent loop, tool calling, typed `Verdict` output, and the Claude client. Pinned below 3 because v2 moves fast. |
 | `voyageai` | `>=0.3` | MIT | `rag` (optional) | Embeddings via Voyage AI (Anthropic's recommended partner); used only with `VOYAGE_API_KEY` (below). |
 
 ### `[dev]` extra

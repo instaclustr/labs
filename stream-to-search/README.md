@@ -53,8 +53,7 @@ verdict = agent.investigate_anomaly(anomaly)             # agentic: Claude calls
 verdict.verdict                                           # "genuine" | "benign" | "uncertain"
 ```
 
-How it works: [`ARCHITECTURE.md`](ARCHITECTURE.md) §3c. Why Pydantic AI handles only this half:
-[`design/pydantic-ai-agent.md`](design/pydantic-ai-agent.md).
+How it works: [`ARCHITECTURE.md`](ARCHITECTURE.md) §3c.
 
 ## Quickstart
 
@@ -120,8 +119,6 @@ tests/                       test_agent.py, test_rag.py, test_search.py (offline
 scripts/smoke_test.sh        fresh stack + demos + all tests, end to end
 ARCHITECTURE.md              how it works: data flow, design decisions, extending it, limitations & caveats
 DEPENDENCIES.md              Python packages, container images, credentials, licensing
-design/                      design docs (pydantic-ai-agent.md: why the AI layer runs on Pydantic AI)
-Purpose.md                   the original goals
 ```
 
 ## License
