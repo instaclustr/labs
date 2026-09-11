@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "instaclustr-sdk"
+version = "0.1.0"
+description = "A seamless streaming-to-search SDK: publish events to Kafka, detect anomalies in ClickHouse — synchronously (demo) or asynchronously (production)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+classifiers = [
+    "License :: OSI Approved :: Apache Software License",
+]
+dependencies = [
+    "confluent-kafka>=2.3",
+    "clickhouse-connect>=0.7",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+# AI agent + RAG. pydantic-ai (with its Anthropic extra) drives the model calls in
+# instaclustr_sdk.agent; voyageai is an optional (better) embedder for instaclustr_sdk.rag — it falls back to
+# a local embedder without it. See design/pydantic-ai-agent.md.
+ai = ["pydantic-ai-slim[anthropic]>=2.42,<3", "voyageai>=0.3"]
+
+[tool.setuptools.packages.find]
+include = ["instaclustr_sdk*"]
