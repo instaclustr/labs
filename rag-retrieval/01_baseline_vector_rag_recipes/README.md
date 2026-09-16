@@ -37,6 +37,46 @@ ranking flip, not just a close call. A secondary, thinner-margin pair
 ("Chicken Cordon Bleu" -- Skinnytaste vs. sargento.com, soy vs. no-soy) is
 also included in the sample for further exploration.
 
+## Why chunking matters (and when)
+
+Chunking is the practice of splitting a document into smaller pieces
+*before* embedding and indexing it, so each piece gets its own vector and
+can be retrieved independently. It matters because a single embedding
+vector represents the *whole* text you feed it -- if that text covers
+several distinct facts, the vector becomes an average of all of them, and
+retrieval gets worse at matching any one fact precisely.
+
+Take a recipe as an example: its name and ingredient list are one topic
+("what's in this dish"). Its full nutrient breakdown is a different one
+("how much sodium/potassium/etc. per serving"). Its prep instructions are
+a third. Embed all of that as one block of text, and a question about
+sodium content competes for relevance against the ingredient list and the
+instructions in the same vector -- none of which it's really "about."
+Split it into chunks along those natural boundaries instead, and the
+sodium question can match specifically against the nutrient-breakdown
+chunk, not get diluted by everything else in the document.
+
+Two things determine whether you need this:
+- **Document length** -- short documents (a name + a handful of
+  ingredients) don't have enough distinct content for a single vector to
+  blur together in the first place.
+- **Topical density** -- even a short document can need chunking if it
+  packs in several unrelated facts a user might ask about independently.
+
+Dataset *size* isn't the deciding factor -- 40,000 short documents don't
+need chunking any more than 40 do; it's about how much, and how varied,
+the content of *each individual* document is.
+
+A couple of practical details that matter once you do chunk:
+- **Overlap** -- chunking with a fixed window (e.g. 200 words) and a
+  small overlap (e.g. 40 words) prevents a fact from being cut exactly at
+  a chunk boundary and lost from both halves.
+- **Self-describing chunks** -- a chunk retrieved on its own loses the
+  context of "which recipe is this from?" unless you carry identifying
+  fields (name, source, URL) into every chunk's text, not just the first
+  one. Otherwise a hit on chunk 3 of 5 is unusable without also fetching
+  chunk 1.
+
 ## Run it
 
 ```bash
