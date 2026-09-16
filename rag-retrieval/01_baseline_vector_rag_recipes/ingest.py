@@ -5,9 +5,9 @@
 
 Vector-only retrieval matches by *semantic similarity*, not by which
 recipe is actually the correct one to answer about. See README.md for the
-real, naturally-occurring ambiguous pair this stage uses (two "Chicken
-Cordon Bleu" recipes from different sources, only one of which contains
-soy).
+real, naturally-occurring ambiguous pair this stage uses (two "Fish and
+Chips" recipes from different sources, only one of which contains
+sulfites).
 """
 from __future__ import annotations
 
