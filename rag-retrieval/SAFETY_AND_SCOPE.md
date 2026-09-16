@@ -21,7 +21,7 @@ verified source and consult a qualified professional.
 Each stage narrows a specific, verified retrieval failure — not a general
 safety guarantee:
 
-- **Stages 1 → 2/2b**: that a retrieval system doesn't confuse two
+- **Stages 1 → 2**: that a retrieval system doesn't confuse two
   similarly-worded questions with different correct answers, by using
   exact keyword/entity matching instead of relying solely on semantic
   similarity.
@@ -65,9 +65,9 @@ check, not a **correctness** check:
 - **Not a real dietary-safety product.** Built for teaching retrieval
   architecture, not for shipping to end users making real allergen
   decisions.
-- **Small, curated, static dataset.** 260 recipes and 128 BBC articles,
-  chosen (in the recipe case) specifically *because* they contain a known
-  ambiguous pair — not a representative or comprehensive corpus.
+- **Small, curated, static dataset.** 260 recipes, chosen specifically
+  *because* they contain a known ambiguous pair — not a representative or
+  comprehensive corpus.
 - **No claim-level fact-checking.** See above — citations are checked for
   grounding, not factual accuracy of the claim they support.
 - **No response policy is enforced on governance failures.** Stage 6's

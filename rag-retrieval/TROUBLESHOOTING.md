@@ -19,7 +19,7 @@ values are missing/still placeholders (`OPENSEARCH_HOST`,
 
 ### `OSError: [E050] Can't find model 'en_core_web_sm'`
 
-`ner_service.py` (Stages 2, 2b, 4, 5) needs spaCy's small English model,
+`ner_service.py` (Stages 2, 4, 5) needs spaCy's small English model,
 which isn't installed by `pip install -r requirements.txt` alone:
 
 ```bash
@@ -80,7 +80,7 @@ terminal you started it in.
 Default port is 8000 (`PORT` env var to override). If Stage 2's
 `ner_service.py` is already running, Stage 4/5's `query.py` can reuse it
 directly — no need to start a second copy (see each stage's README, which
-says "same one Stage 2/2b uses").
+says "same one Stage 2 uses").
 
 ### OpenSearch connection suddenly fails after previously working
 
