@@ -8,7 +8,7 @@ Each lab ships with a sample dataset, discussions on decision points, and the ex
 
 | Lab | You'll build | Repo | Notebook | Videos |
 |---|---|---|---|---|
-| **Retrieval-Augmented Generation** | A retrieval application using hybrid search and vector retrieval - load sample data, validate retrieval behavior, understand the pattern. | _Coming soon_ | _Coming soon_ | _Coming soon on [InstAcademy](https://github.com/instaclustr/InstAcademy)_ |
+| **Retrieval-Augmented Generation** | A retrieval application using hybrid search and vector retrieval - load sample data, validate retrieval behavior, understand the pattern. | [Getting Started](rag-retrieval) | _Coming soon_ | _Coming soon on [InstAcademy](https://www.instaclustr.com/instacademy-courses)_ |
 | **Streaming-to-Search** | An event pipeline that streams operational data into a searchable index - update search state, validate indexing, inspect failure handling. | _Coming soon_ | _Coming soon_ | - |
 | **Agentic RAG** | An Agentic RAG agent that implements a Mixture of Experts (MoE) architecture with 2 Experts, OpenSearch as a vector store, and MCP tooling. | [Getting Started](agentic-rag) | _Coming soon_ | [Video](agentic-rag/README.md#videos) |
 
