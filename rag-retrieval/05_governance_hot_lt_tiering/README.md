@@ -126,6 +126,10 @@ into the same `recipes-audit-log` record as the tiering fields, so a single
 audit document captures both governance layers: which tier(s) were
 searched and why, and whether the final answer's citations were honest.
 
+## Architecture
+
+![Stage 5 architecture diagram](./diagram.png)
+
 ## Dataset
 
 Same curated 260-recipe sample as Stage 1/2/3/4, in
@@ -258,3 +262,11 @@ Verified run:
 [PASS] Stage 5 answered the hot-tier recipe without escalating: meta={'tiers_searched': ['hot'], 'escalated': False, 'escalation_reason': None, 'hot_hit_count': 25, 'hot_top_score': 22.112926, 'evidence_handles': ['R1', 'R2', 'R3', 'R4', 'R5'], 'cited_handles': ['R1'], 'hallucinated_citations': [], 'citations_valid': True}
 [PASS] Stage 5 escalated to the LT tier and found the correct recipe: meta={'tiers_searched': ['hot', 'lt'], 'escalated': True, 'escalation_reason': 'named_source_not_in_hot_tier', 'hot_hit_count': 25, 'hot_top_score': 22.112926, 'evidence_handles': ['R1', 'R2', 'R3', 'R4', 'R5'], 'cited_handles': ['R4'], 'hallucinated_citations': [], 'citations_valid': True}
 ```
+
+## Troubleshooting
+
+Setup or runtime issue? See [`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md)
+for common fixes -- including what to check if `ner_service.py` isn't
+running (entity matching silently degrades to plain full-text matching
+rather than erroring), missing `.env` values, certificate errors, and
+Bedrock model access.

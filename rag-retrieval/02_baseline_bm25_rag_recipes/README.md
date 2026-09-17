@@ -12,6 +12,10 @@ the same query keyword either matches a document's text or it doesn't. This
 stage's job is to correctly disambiguate the two same-named recipes that
 Stage 1's vector search could confuse.
 
+## Architecture
+
+![Stage 2 architecture diagram](./diagram.png)
+
 ## Dataset
 
 Same curated 260-recipe sample as Stage 1, in `recipes/recipes_sample.json`
@@ -68,3 +72,11 @@ With `ner_service.py` still running:
 ```bash
 python validate.py
 ```
+
+## Troubleshooting
+
+Setup or runtime issue? See [`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md)
+for common fixes -- including what to check if `ner_service.py` isn't
+running (entity matching silently degrades to plain full-text matching
+rather than erroring), missing `.env` values, certificate errors, and
+Bedrock model access.

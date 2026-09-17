@@ -27,6 +27,10 @@ over-privileged. This stage draws an explicit line between:
   intentionally don't hold, and so can only ever be a documented,
   reviewable checklist item, not a script.
 
+## Architecture
+
+![Stage 6 architecture diagram](./diagram.png)
+
 ## A. Infrastructure & access control *(checklist — manual/infra action)*
 
 These are unchanged from the original plan; nothing here is automated by
@@ -174,3 +178,11 @@ python validate.py
 4. **Live governance stats** (live cluster): `audit_log_governance_stats()`
    returns well-formed rates (each in `[0, 1]`) against whatever real audit
    data Stage 5 has already written.
+
+## Troubleshooting
+
+Setup or runtime issue? See [`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md)
+for common fixes -- including what to check if `ner_service.py` isn't
+running (entity matching silently degrades to plain full-text matching
+rather than erroring), missing `.env` values, certificate errors, and
+Bedrock model access.

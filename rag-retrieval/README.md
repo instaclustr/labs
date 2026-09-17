@@ -69,6 +69,8 @@ stage before it.
 | [5 — Governance-Driven Hot/LT Tiering](05_governance_hot_lt_tiering/README.md) | Safety-driven hot/archive tiering, escalation, audit log, citation-tagging | Treating all data as equally reachable regardless of safety criticality; no record of *why* a query reached what it reached |
 | [6 — Harden for Production](06_operationalize_production/README.md) | Governance-signal monitoring, audit-log retention, policy change control | Nobody watching the audit trail Stage 5 introduced; unbounded audit growth; undocumented threshold drift |
 
+![Overview diagram](./overview_diagram.png)
+
 Full rationale, `common/` design, and index-naming scheme:
 [`ARCHITECTURE.md`](ARCHITECTURE.md). Production hardening checklist
 (automated + manual): [`OPERATIONAL_CHECKLIST.md`](OPERATIONAL_CHECKLIST.md).

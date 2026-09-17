@@ -66,7 +66,7 @@ region.
 
 ### Query results look wrong / entity matching isn't kicking in
 
-Check whether `ner_service.py` is actually running (Stages 2, 2b, 4, 5
+Check whether `ner_service.py` is actually running (Stages 2, 4, 5
 all depend on it). `common/ner_client.py`'s `NERClient` deliberately
 **swallows** connection failures into an empty entity list rather than
 raising, so a downed NER service degrades silently to plain full-text

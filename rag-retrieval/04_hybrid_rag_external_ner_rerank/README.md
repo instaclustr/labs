@@ -44,6 +44,10 @@ aliases (`allergen`→`cautions`, `diet`→`diet_labels`, `cuisine`→`cuisine_t
 etc., see `FILTERABLE_FIELDS` in `common/opensearch_client.py`) mean any of
 these can be excluded or required from the CLI — not just one hardcoded flag.
 
+## Architecture
+
+![Stage 4 architecture diagram](./diagram.png)
+
 ## Dataset
 
 Same curated 260-recipe sample as Stage 1/2/3, in
@@ -125,3 +129,11 @@ python validate.py
 `validate.py` asserts the exclusion guarantee directly: every recipe in
 both the grounding set and the refined set must NOT carry the excluded
 caution, for every recipe in the corpus that does carry it.
+
+## Troubleshooting
+
+Setup or runtime issue? See [`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md)
+for common fixes -- including what to check if `ner_service.py` isn't
+running (entity matching silently degrades to plain full-text matching
+rather than erroring), missing `.env` values, certificate errors, and
+Bedrock model access.

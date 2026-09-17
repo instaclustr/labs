@@ -25,6 +25,8 @@ its *retrieval logic*, never its plumbing.
 | `common/logging.py` | One `get_logger()` used everywhere, with third-party HTTP libraries quieted below `DEBUG`. |
 | `common/__init__.py` | Runs on import, before anything else: merges the macOS System keychain's trusted roots into a local CA bundle. This exists because Python installed via the official python.org `.pkg` and corporate TLS-inspecting proxies (Zscaler, Netskope, ...) both cause `CERTIFICATE_VERIFY_FAILED` even on an unrestricted network — see `TROUBLESHOOTING.md`. |
 
+![Overview diagram](./overview_diagram.png)
+
 ## Infrastructure choices, and why
 
 **Instaclustr-hosted OpenSearch**, not a local container. Every stage's

@@ -13,6 +13,10 @@ prevent.
 different correct answers, and pure vector retrieval has no way to know
 that -- it just returns "similar-sounding" recipes.
 
+## Architecture
+
+![Stage 1 architecture diagram](./diagram.png)
+
 ## Dataset
 
 A curated sample of 260 recipes (`recipes/recipes_sample.json`) pulled from
@@ -114,3 +118,9 @@ correctly answers both questions).
 ```bash
 python validate.py
 ```
+
+## Troubleshooting
+
+Setup or runtime issue? See [`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md)
+for common fixes (missing `.env` values, certificate errors, Bedrock
+model access, etc.).

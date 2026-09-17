@@ -64,6 +64,10 @@ Weights are tunable from the CLI (`--bm25-weight` / `--vector-weight` in
 `ingest.py`, which is what (re)creates the pipeline) if you want to see how
 leaning further toward BM25 or vector shifts the ranking.
 
+## Architecture
+
+![Stage 3 architecture diagram](./diagram.png)
+
 ## Dataset
 
 Same curated 260-recipe sample as Stage 1/2, in
@@ -118,4 +122,10 @@ to force it there like Stage 2 did.
 ```bash
 python validate.py
 ```
+
+## Troubleshooting
+
+Setup or runtime issue? See [`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md)
+for common fixes (missing `.env` values, certificate errors, Bedrock
+model access, etc.).
 
