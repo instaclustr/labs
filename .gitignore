@@ -2,6 +2,16 @@
 __pycache__/
 *.py[codz]
 *$py.class
+.env
+venv/
+.idea/
+.vscode/
+site/
+_migration/
+bin/
+target/
+*.log
+node_modules/
 
 # C extensions
 *.so

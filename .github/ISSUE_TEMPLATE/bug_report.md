@@ -1,7 +1,7 @@
 ---
 name: Bug Report
 about: File a bug for something not working as expected.
-title: ''
+title: "[BUG] "
 labels: bug, needs-triage
 assignees: ''
 

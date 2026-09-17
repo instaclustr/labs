@@ -1,7 +1,7 @@
 ---
 name: Feature Request
 about: File a request for a new feature.
-title: ''
+title: "[FEATURE] "
 labels: needs-triage
 assignees: ''
 

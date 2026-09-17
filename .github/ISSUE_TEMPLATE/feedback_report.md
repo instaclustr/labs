@@ -1,7 +1,7 @@
 ---
 name: Feedback Report
 about: File general feedback on Instaclustr Labs.
-title: ''
+title: "[FEEDBACK] "
 labels: feedback, needs-triage
 assignees: ''
 

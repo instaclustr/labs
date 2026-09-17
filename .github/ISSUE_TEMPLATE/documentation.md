@@ -1,7 +1,7 @@
 ---
 name: Docs Request
 about: File a request for incorrect or suggested docs.
-title: ''
+title: "[DOCS] "
 labels: documentation, needs-triage
 assignees: ''
 
