@@ -1,0 +1,17 @@
+# Auto-provisions the ClickHouse datasource for the dashboards. The fixed `uid` lets the
+# starter dashboard reference this datasource without manual wiring.
+apiVersion: 1
+
+datasources:
+  - name: ClickHouse
+    uid: clickhouse
+    type: grafana-clickhouse-datasource
+    access: proxy
+    isDefault: true
+    jsonData:
+      host: clickhouse        # docker-compose service name (reachable on the compose network)
+      port: 9000              # ClickHouse native protocol
+      protocol: native
+      username: default
+    secureJsonData:
+      password: ""
