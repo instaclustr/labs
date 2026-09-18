@@ -17,3 +17,6 @@
 |------------|-----------|-------------|
 | Project Lead | Amanda Katona | [amandakatona](https://github.com/amandakatona) |
 | Engineer | David vonThenen | [davidvonthenen](https://github.com/davidvonthenen) |
+| Engineer | Ramya Ravi | [ramyaravi1](https://github.com/ramyaravi1) |
+| Engineer | Brian Graf | [TheBrianGraf](https://github.com/TheBrianGraf) |
+| Engineer | Mariah McLaughlin | [mamclaughlin](https://github.com/mamclaughlin) |
