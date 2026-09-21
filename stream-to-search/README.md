@@ -5,41 +5,79 @@ for problems that need both real-time event streaming (Kafka) and search & analy
 (ClickHouse). The use case is anomaly detection, with an AI agent that explains the
 anomalies it finds.
 
-Using it looks like this, once the [Installing](#installing) below has the stack running:
+Example using the stack in [Install](#install):
 
 ```python
+import random
 import instaclustr_sdk.stream as stream
 import instaclustr_sdk.search as search
 import instaclustr_sdk.rag as rag
 import instaclustr_sdk.agent as agent
+from instaclustr_sdk import Event
 
-stream.setup(bootstrap_servers="localhost:29092")
-search.setup(host="localhost", port=8123)
+stream.setup()   # Kafka
+search.setup()   # ClickHouse
 rag.setup()
-agent.setup() 
+agent.setup()    # reads ANTHROPIC_API_KEY
 
-# Stream events
-wm = stream.publish(my_events)                 # onto Kafka
+# Publish normal temperature readings plus one spike.
+readings = [Event("sensor-1", "temperature", random.gauss(20, 0.5)) for _ in range(200)]
+readings.append(Event("sensor-1", "temperature", 95.0))
+wm = stream.publish(readings)
 
-# Search anomalies
-anomalies = search.find_anomalies(wait_for=wm) # out of ClickHouse
+# Detect via z-score.
+anomaly = search.find_anomalies(wait_for=wm)[0]
 
-# Agent investigates
+# Give the agent physical domain knowledge.
 rag.add_knowledge("Spikes above 90C on sensor-1 are disconnects, not real heat.",
-                  kind="domain", entity="sensor-1", metric="temperature")
+                  entity="sensor-1", metric="temperature")
 
-anomaly = anomalies[0]                                  # a hit from search.find_anomalies() above
-verdict = agent.explain_anomaly(anomaly, remember=True) # one call + retrieved context; stores the finding
-verdict = agent.investigate_anomaly(anomaly)            # the model calls metric-stats + memory-search tools
-verdict.verdict                                         # "genuine" | "benign" | "uncertain"
+verdict = agent.explain_anomaly(anomaly, remember=True)
+print(verdict.verdict)   # genuine | benign | uncertain
+print(verdict.cause)
 ```
+
+**Two verdict modes**
+
+- **One-shot** — `agent.explain_anomaly(anomaly)`. The SDK runs the knowledge query itself, puts
+  the results in the prompt, and the agent answers in one turn. `remember=True` writes the verdict
+  back as a finding.
+- **Agentic loop** — `agent.investigate_anomaly(anomaly)`. The agent gets tools (trailing metric
+  statistics, the same knowledge search) and decides what to pull, over as many turns as it needs.
 
 > **New here? Start with the guided walkthrough: [`demo/README.md`](demo/README.md)** — it builds
 > a full anomaly-detection app step by step (publish → sync detect → async detect → AI-explained findings).
 
-## Installing
+## Architecture
 
-You need **Python 3.10+** and a container runtime with Compose:
+Kafka for the stream, ClickHouse for both search and RAG, two verdict modes:
+
+```
+  sdk                                        stack
+  ─────────                                  ────────────────
+
+  stream ──── publish(events) ──────────▶  ┌─ Kafka ──────────────────┐
+                                           │  "events" topic          │
+                                           └────────────┬─────────────┘
+                                                        │  Kafka engine + MV
+                                                        ▼
+  search ──── find_anomalies() ─────────▶  ┌─ ClickHouse ─────────────┐
+              metric_stats()               │  events     (z-score)    │
+  rag ─────── add_knowledge() ──────────▶  │  knowledge  (vectors)    │
+              retrieve()                   └────────────▲─────────────┘
+                                                        │  tools, when the
+                                                        │  model asks for them
+  agent ───── explain_anomaly() ────────▶  ┌─ model ────┴─────────────┐
+              investigate_anomaly()        │  Claude via Pydantic AI  │
+                                           └──────────────────────────┘
+```
+
+For synchronous and asynchronous data flow, detection, AI and RAG in detail:
+[`ARCHITECTURE.md`](ARCHITECTURE.md).
+
+## Install
+
+**Python 3.10+** and a container runtime with Compose:
 [Docker with Docker Compose](https://docs.docker.com/compose/install/), or
 [Podman](https://podman.io/docs/installation) with
 [`podman-compose`](https://pypi.org/project/podman-compose/) (`pip install podman-compose`). With
@@ -76,10 +114,6 @@ pip install -e ".[ai,docs]"
 scripts/docs.sh                  # serve it at http://localhost:8080
 scripts/docs.sh -o docs/api      # or write static HTML to docs/api/
 ```
-
-## Architecture
-
-For details on synchronous and asynchronous data flow, detection, AI and RAG: [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Tests
 

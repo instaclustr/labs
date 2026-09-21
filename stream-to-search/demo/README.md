@@ -24,7 +24,7 @@ Each step has a runnable script in this folder. Run them from the **repository r
 ## Step 0 — Start the stack
 
 Start Kafka and ClickHouse, install the SDK, and set your API keys for Step 4. If you've already
-followed [Installing](../README.md#installing) in the README, just set the keys. Prerequisites and
+followed [Install](../README.md#install) in the README, just set the keys. Prerequisites and
 the Podman equivalents of these commands are there too.
 
 ```bash
