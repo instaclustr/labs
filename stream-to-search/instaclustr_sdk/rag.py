@@ -1,6 +1,6 @@
 """RAG module — structured memory of past findings + domain context, in ClickHouse.
 
-The knowledge base lives in the `knowledge` table (clickhouse/init/03_knowledge.sql):
+The knowledge base lives in the `knowledge` table (stack/clickhouse/init/03_knowledge.sql):
 each row is a piece of text plus its embedding vector. Retrieval is a cosine-distance
 search, so the AI agent (instaclustr_sdk/agent.py) can ground its analysis in what anomalies are /
 are not for a given entity, and in how similar cases were judged before.

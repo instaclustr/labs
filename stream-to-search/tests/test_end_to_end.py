@@ -2,7 +2,7 @@
 
 Require the full stack running and are skipped unless RUN_INTEGRATION=1:
 
-    docker compose up -d
+    docker compose -f stack/docker-compose.yml up -d
     pip install -e ".[ai,dev]"
     RUN_INTEGRATION=1 pytest
 

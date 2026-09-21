@@ -2,7 +2,7 @@
 
 `zscore_sql()` is the single source of truth for the SYNC path (run on demand by
 search.find_anomalies). The SAME z-score logic is mirrored in
-clickhouse/init/02_anomalies.sql for the ASYNC path (a refreshable materialized view).
+stack/clickhouse/init/02_anomalies.sql for the ASYNC path (a refreshable materialized view).
 If you change the rule here, change it there too.
 
 A point is anomalous when its value is more than `threshold` standard deviations from the

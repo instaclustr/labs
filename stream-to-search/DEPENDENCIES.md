@@ -15,7 +15,7 @@
 
 - **Python ≥ 3.10** (`requires-python = ">=3.10"`; required by `pydantic-ai` and `anthropic` 1.x).
 - **Docker + Docker Compose**, or **Podman + podman-compose** — to run the Kafka + ClickHouse
-  (+ Grafana) stack. The images in `docker-compose.yml` are fully qualified (`docker.io/...`), so
+  (+ Grafana) stack. The images in `stack/docker-compose.yml` are fully qualified (`docker.io/...`), so
   Podman pulls them without prompting.
 - **Internet access** on first run — to pull the images, install the Grafana ClickHouse plugin, and
   reach the model provider's API and Voyage. The core stream + detect path needs no internet once the
@@ -86,7 +86,7 @@ fallback embedder uses only `hashlib`/`math`/`re`.
 
 ## Infrastructure services (container images)
 
-Pinned in `docker-compose.yml`.
+Pinned in `stack/docker-compose.yml`.
 
 | Service | Image | License | Role | Notes |
 |---|---|---|---|---|

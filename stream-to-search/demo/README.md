@@ -29,7 +29,7 @@ the Podman equivalents of these commands are there too.
 
 ```bash
 # from the repo root
-docker compose up -d                       # starts Kafka + ClickHouse (+ Grafana)
+docker compose -f stack/docker-compose.yml up -d   # starts Kafka + ClickHouse (+ Grafana)
 curl -s localhost:8123/ping                # -> Ok.  (wait a few seconds if it isn't ready yet)
 
 python3 -m venv .venv && source .venv/bin/activate   # Python 3.10+
@@ -155,7 +155,7 @@ ships an optional Grafana service, pre-provisioned with a ClickHouse datasource 
 
 The dashboard polls ClickHouse directly: the `events` table for the per-sensor lines and the
 `anomalies` table for the red markers. The Kafka `anomalies` topic is for programmatic consumers
-like the two above. Provisioning lives in `grafana/`, and the dashboard is editable in place.
+like the two above. Provisioning lives in `stack/grafana/`, and the dashboard is editable in place.
 
 ---
 
@@ -216,5 +216,5 @@ domain knowledge, and the model, and scaling out.
 ## Reset
 
 ```bash
-docker compose down -v      # stop and wipe all data (ClickHouse re-runs the DDL on next up)
+docker compose -f stack/docker-compose.yml down -v   # stop and wipe all data (the DDL re-runs on next up)
 ```

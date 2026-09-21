@@ -53,8 +53,8 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[ai]"                           # the SDK plus the AI agent and RAG extras
 
-# 2. Start Kafka + ClickHouse (+ Grafana)
-docker compose up -d
+# 2. Start Kafka + ClickHouse (+ Grafana) -- the stack is defined in stack/
+docker compose -f stack/docker-compose.yml up -d
 curl -s localhost:8123/ping                      # -> Ok. once it's ready
 ```
 

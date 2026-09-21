@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # End-to-end smoke test, starting from a fresh stack:
 #   1. offline unit tests
-#   2. Kafka + ClickHouse from scratch, checking every object in clickhouse/init/*.sql exists
+#   2. Kafka + ClickHouse from scratch, checking every object in stack/clickhouse/init/*.sql exists
 #   3. the demo walkthrough, demo/01-04 (demo/04 only when a model is configured); first, so
 #      its unfiltered queries see only its own data
 #   4. integration tests (sync + async detection; the live agent test when a model is configured)
@@ -52,6 +52,7 @@ if [[ -z "${COMPOSE:-}" ]]; then
   fi
 fi
 read -ra compose <<<"$COMPOSE"
+compose+=(-f stack/docker-compose.yml)  # the stack lives in stack/; this script runs from the repo root
 case "$COMPOSE" in *podman*) runtime=podman ;; *) runtime=docker ;; esac
 
 if [[ -f .env ]]; then set -a; . ./.env; set +a; fi
@@ -71,7 +72,7 @@ step "2/4 Fresh stack: Kafka + ClickHouse via $COMPOSE"
 "${compose[@]}" down -v >/dev/null 2>&1 || true
 cleanup() {
   if ((keep)); then
-    echo "Stack left running; remove it with: $COMPOSE down -v"
+    echo "Stack left running; remove it with: ${compose[*]} down -v"
   else
     "${compose[@]}" down -v >/dev/null 2>&1 || true
   fi
@@ -89,12 +90,12 @@ for ((i = 1; ; i++)); do
   if [[ "$("$runtime" inspect -f '{{.State.Running}}' s2s-clickhouse 2>/dev/null)" == false ]] ||
      ((i == 60)); then
     "$runtime" logs --tail 30 s2s-clickhouse >&2 || true
-    fail "ClickHouse didn't come up (an error in clickhouse/init/*.sql stops it; log above)"
+    fail "ClickHouse didn't come up (an error in stack/clickhouse/init/*.sql stops it; log above)"
   fi
   sleep 2
 done
 
-expected=$(sed -nE 's/^CREATE (TABLE|MATERIALIZED VIEW) IF NOT EXISTS ([a-z_]+).*/\2/p' clickhouse/init/*.sql)
+expected=$(sed -nE 's/^CREATE (TABLE|MATERIALIZED VIEW) IF NOT EXISTS ([a-z_]+).*/\2/p' stack/clickhouse/init/*.sql)
 tables=" $("$runtime" exec s2s-clickhouse clickhouse-client -q 'SHOW TABLES' | tr '\n' ' ')"
 for t in $expected; do
   [[ "$tables" == *" $t "* ]] || fail "ClickHouse is missing '$t' (has:$tables)"

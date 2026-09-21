@@ -26,9 +26,9 @@ SDK talks to.
 | **`instaclustr_sdk.models` / `instaclustr_sdk.config`** | `Event`/`Anomaly`/`Watermark`; config dataclasses | `instaclustr_sdk/models.py`, `config.py` |
 | **Kafka** | event transport; topics `events` and `anomalies` | single-node KRaft |
 | **ClickHouse** | ingestion, detection, analytics, and the vector store | tables + materialized views |
-| **Grafana** | optional live dashboard | `grafana/` |
+| **Grafana** | optional live dashboard | `stack/grafana/` |
 
-### ClickHouse objects (created by `clickhouse/init/*.sql`)
+### ClickHouse objects (created by `stack/clickhouse/init/*.sql`)
 
 | Object | Kind | Role |
 |---|---|---|
@@ -125,7 +125,7 @@ The rule is a **z-score**: a point is anomalous when its value is more than `thr
 standard deviations from the trailing per-`(entity, metric)` mean.
 
 - **Sync path:** `instaclustr_sdk/detection.py::zscore_sql()` builds the query, run on demand by `find_anomalies`.
-- **Async path:** the *same* expression lives in `clickhouse/init/02_anomalies.sql` as the body of
+- **Async path:** the *same* expression lives in `stack/clickhouse/init/02_anomalies.sql` as the body of
   the refreshable MV.
 
 The expression is kept identical by intent (cross-referenced in comments). What differs is which
@@ -140,19 +140,23 @@ This duplication is a deliberate trade (§7); to change the rule, edit both home
 
 ## 6. Deployment topology
 
-`docker-compose.yml` runs three services on one network:
+`stack/docker-compose.yml` runs three services on one network:
 
 ```
         host                         docker network
   localhost:29092 ─┐        ┌─ kafka:9092  (Kafka, KRaft single node)
   localhost:8123  ─┼─ SDK ──┤
-  localhost:9000  ─┘        ├─ clickhouse:9000/8123  (auto-runs clickhouse/init/*.sql)
+  localhost:9000  ─┘        ├─ clickhouse:9000/8123  (auto-runs stack/clickhouse/init/*.sql)
   localhost:3000  ── UI ────┴─ grafana:3000  (queries clickhouse:9000)
 ```
 
 Kafka advertises dual listeners so both the host-side SDK (`localhost:29092`) and the ClickHouse
-container (`kafka:9092`) can reach it. ClickHouse executes the DDL in `clickhouse/init/` on first
-start. Grafana auto-provisions its datasource + dashboard from `grafana/`.
+container (`kafka:9092`) can reach it. ClickHouse executes the DDL in `stack/clickhouse/init/` on
+first start. Grafana auto-provisions its datasource + dashboard from `stack/grafana/`.
+
+Everything that defines the stack lives in `stack/`, so start it with
+`docker compose -f stack/docker-compose.yml up -d`. The compose file pins the project name, so
+running it from the repo root and from inside `stack/` addresses the same stack.
 
 ## 7. Design decisions & trade-offs
 

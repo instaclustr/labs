@@ -4,6 +4,12 @@
 #       * localhost:29092  -> reachable from the host (Python SDK / demo)
 #   - ClickHouse: auto-runs the DDL in ./clickhouse/init on first start.
 # Images are fully qualified (docker.io/...) so Podman resolves them without prompting.
+#
+# Run it from the repo root: docker compose -f stack/docker-compose.yml up -d
+# The project name is pinned below so that invocation and `cd stack && docker compose up -d`
+# address the same stack; otherwise the name follows the directory you run from.
+name: stream-to-search
+
 services:
   kafka:
     image: docker.io/apache/kafka:3.8.0
