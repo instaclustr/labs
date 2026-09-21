@@ -1,0 +1,91 @@
+services:
+  opensearch:
+    image: docker.io/davidvonthenen/netapp-instaclustr-agentic-lab-os:0.0.15
+    container_name: opensearch-single
+    environment:
+      discovery.type: single-node
+      DISABLE_SECURITY_PLUGIN: "true"
+      DISABLE_INSTALL_DEMO_CONFIG: "true"
+      cluster.routing.allocation.disk.threshold_enabled: "false"
+      OPENSEARCH_JAVA_OPTS: "-Xms1g -Xmx1g"
+    ports:
+      - "127.0.0.1:9200:9200"
+      - "127.0.0.1:9600:9600"
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent --max-time 5 'http://127.0.0.1:9200/_cluster/health?wait_for_status=yellow&timeout=3s' | grep -Eq '\"status\"[[:space:]]*:[[:space:]]*\"(green|yellow)\"'"]
+      interval: 15s
+      timeout: 10s
+      start_period: 90s
+      retries: 12
+    networks:
+      opensearch-net:
+        aliases: [opensearch-single]
+
+  dashboards:
+    image: docker.io/opensearchproject/opensearch-dashboards:3.5.0
+    container_name: opensearch-single-dashboards
+    environment:
+      OPENSEARCH_HOSTS: '["http://opensearch-single:9200"]'
+      DISABLE_SECURITY_DASHBOARDS_PLUGIN: "true"
+      SERVER_HOST: "0.0.0.0"
+    ports:
+      - "127.0.0.1:5601:5601"
+    depends_on:
+      - opensearch
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent --max-time 5 http://127.0.0.1:5601/api/status >/dev/null"]
+      interval: 15s
+      timeout: 10s
+      start_period: 120s
+      retries: 16
+    networks:
+      opensearch-net:
+        aliases: [opensearch-single-dashboards]
+
+  lab:
+    image: docker.io/davidvonthenen/netapp-instaclustr-agentic-lab-dev:0.0.15
+    container_name: agentic-lab
+    working_dir: /workspace/agentic-rag
+    stdin_open: true
+    tty: true
+    environment:
+      OPENSEARCH_HOST: opensearch-single
+      OPENSEARCH_DASHBOARDS_URL: http://opensearch-single-dashboards:5601
+      LAB_HEALTH_URL: http://lab:8088/healthz
+      LAB_REPO_DIR: /workspace/agentic-rag
+      LAB_CONTAINER: "true"
+      HF_HOME: /home/lab/.cache/huggingface
+      USE_EXTERNAL_AI: ${USE_EXTERNAL_AI:-true}
+      USE_EXTERNAL_OPENAI: ${USE_EXTERNAL_OPENAI:-true}
+      USE_EXTERNAL_ORCH_AI: ${USE_EXTERNAL_ORCH_AI:-}
+      USE_EXTERNAL_LLM_AI: ${USE_EXTERNAL_LLM_AI:-}
+      HF_TOKEN: ${HF_TOKEN:-}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5.4}
+      USE_EXTERNAL_ORCH_AI: ${USE_EXTERNAL_ORCH_AI:-}
+      EXTERNAL_ORCH_URL: ${EXTERNAL_ORCH_URL:-}
+      EXTERNAL_ORCH_API_KEY: ${EXTERNAL_ORCH_API_KEY:-}
+      EXTERNAL_ORCH_MODEL: ${EXTERNAL_ORCH_MODEL:-}
+      EXTERNAL_ORCH_MAX_TOKENS: ${EXTERNAL_ORCH_MAX_TOKENS:-127000}
+      USE_EXTERNAL_LLM_AI: ${USE_EXTERNAL_LLM_AI:-}
+      EXTERNAL_LLM_URL: ${EXTERNAL_LLM_URL:-}
+      EXTERNAL_LLM_API_KEY: ${EXTERNAL_LLM_API_KEY:-}
+      EXTERNAL_LLM_MODEL: ${EXTERNAL_LLM_MODEL:-}
+      EXTERNAL_LLM_MAX_TOKENS: ${EXTERNAL_LLM_MAX_TOKENS:-127000}
+      TAVILY_API_KEY: ${TAVILY_API_KEY:-}
+      FINNHUB_API_KEY: ${FINNHUB_API_KEY:-}
+    depends_on:
+      - opensearch
+      - dashboards
+    networks:
+      - opensearch-net
+
+networks:
+  opensearch-net:
+    name: opensearch-net
+    driver: bridge

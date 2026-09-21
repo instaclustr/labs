@@ -1,0 +1,66 @@
+# introduction
+Exhibit 10\.3
+## MICROSOFT CORPORATION
+## EXECUTIVE INCENTIVE PLAN
+### Section 1. Purpose
+The Microsoft Corporation Executive Incentive Plan is intended to provide incentive compensation to executive officers of the Company and those other senior officers that the Committee has determined should participate in the Plan\. The Plan replaces the Microsoft Corporation Executive Incentive Plan effective for fiscal year 2019 and later awards\.
+### Section 2. Definitions
+
+*The terms used in this Plan include the feminine as well as the masculine gender and the plural as well as the singular, as the context in which they are used requires\. The following terms, unless the context requires otherwise, are defined as follows:*
+
+
+| 2.1 | “Award”means the incentive compensation awarded by the Committee under Section 4.1. Awards may be in the form of cash awards and/or equity-based awards issued under the Stock Plan.                                                                          |
+|-----|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 2.2 | “Code”means the Internal Revenue Code of 1986, as amended.                                                                                                                                                                                                    |
+| 2.3 | “Committee”means the Compensation Committee of the Company’s Board of Directors.                                                                                                                                                                              |
+| 2.4 | “Company”means Microsoft Corporation.                                                                                                                                                                                                                         |
+| 2.5 | “Deferred Compensation Plan”means the Microsoft Corporation Deferred Compensation Plan, or a similar or successor plan or other arrangement for the deferral of compensation specified by the Committee.                                                      |
+| 2.6 | “Participant”means an employee who receives an award under the Plan, as described in Section 3 of the Plan.                                                                                                                                                   |
+| 2.7 | “Plan”means the Microsoft Corporation Executive Incentive Plan, as it may be amended from time to time.                                                                                                                                                       |
+| 2.8 | “Stock Plan”means the Company’s 2026 Stock Plan, 2017 Stock Plan or, for French-qualified stock awards, the Company’s 2001 Stock Plan, or a similar or successor plan or other arrangement of the issuance of equity-based awards specified by the Committee. |
+
+### Section 3. Eligibility and Participation
+Executive officers of the Company are eligible to receive Awards under the Plan\. In addition, other senior officers of the Company may be designated by the Committee to receive Awards under the Plan\. Any person who receives an Award under Section 4\.1 shall be a Participant in the Plan and shall continue to be a Participant until any amounts due under any Awards he may receive have been paid\.
+### Section 4. Incentive Awards
+### 4.1 Grants of Awards.
+
+*Awards under the Plan may be granted for a fiscal year in the form of:*
+
+
+| • | Cash (“Cash Incentives”), with payouts based on the Participant’s target Cash Incentive percentage, and on qualitative and/or quantitative measures;                                                     |
+|---|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| • | Grants of stock awards (“Stock Awards”) under the Stock Plan; and                                                                                                                                        |
+| • | Grants of performance stock awards under the Stock Plan (“Performance Stock Awards”), with payouts determined under a pre-established formula based on the Participant’s target Performance Stock Award. |
+
+
+*Target Awards and actual Awards will be approved by the Compensation Committee or, for the Chief Executive Officer, the independent members of the Board\.*
+
+### 4.2 Payment of the Award.
+
+| (a) | Unless otherwise determined by the Committee, payment of a Cash Incentive for performance during a Company fiscal year will be made by the end of the fiscal quarter following the end of the fiscal year. Payment under a Stock Award will be made in accordance with the applicable award agreement.                                                                 |
+|-----|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| (b) | As permitted by the Committee, a Participant may, in accordance with section 409A of the Code, voluntarily defer receipt of an Award in the form of cash under the terms of the Deferred Compensation Plan.                                                                                                                                                            |
+| (c) | The Company shall have the right to deduct from any Award payable in cash any applicable Federal, state and local income and employment taxes and any other amounts that the Company is required to deduct. Deductions from an Award in the form of an equity compensation award shall be governed by the Company’s Stock Plan and the applicable grant documentation. |
+
+### Section 5. Administration
+
+| 5.1 | General Administration. The Plan is to be administered by the Committee. Subject to the terms and conditions of the Plan, the Committee is authorized and empowered in its sole discretion to select Participants and to make Awards in such amounts and upon such terms and conditions as it shall determine. |
+|-----|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 5.2 | Administrative Rules. The Committee shall have full power and authority to adopt, amend and rescind administrative guidelines, rules and regulations pertaining to this Plan and to interpret the Plan and rule on any questions respecting any of its provisions, terms and conditions.                       |
+| 5.3 | Decisions Binding. All decisions of the Committee concerning this Plan shall be binding on the Company and its subsidiaries and their respective boards of directors, and on all Participants and other persons claiming rights under the Plan.                                                                |
+| 5.4 | Recovery Policy. Amounts paid under the Plan shall be subject to recovery by the Company under its executive compensation recovery policy as in effect from time to time.                                                                                                                                      |
+
+### Section 6. Amendment and Termination
+The Plan may be amended or terminated by the Committee at any time, provided that the amendment or termination of the Plan will not adversely affect the rights of a Participant under an award granted under the Plan\.
+### Section 7. Miscellaneous
+
+| 7.1 | Duration of the Plan. The Plan shall remain in effect until all payments under outstanding Plan awards have been made.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+|-----|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 7.2 | Awards Not Assignable.No Award, or any right thereto, shall be assignable or transferable by a Participant except by will or by the laws of descent and distribution. Any attempted assignment or alienation shall be void and of no force or effect.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| 7.3 | Participant Rights. The right of any Participant to receive any Award payments under the provisions of the Plan shall be an unsecured claim against the general assets of the Company. The Plan shall not create, nor be construed in any manner as having created, any right by a Participant to any Award for any period because of a Participant’s participation in the Plan for any prior period.                                                                                                                                                                                                                                                                                                                                    |
+| 7.4 | Employment at Will. Neither this Plan nor any action or communication under this Plan: (1) gives any employee any right with respect to employment or continuation of current employment with the Company or its subsidiaries or to employment that is not terminable at will, or (2) sets any employee’s employment with the Company or its subsidiaries for any minimum or fixed period. Employment by the Company or a Company subsidiary may be terminated by either the employee or the employer at any time, for any reason or no reason, with or without cause, and with or without notice or any kind of pre- or post-termination warning, discipline or procedure. This Section 7.4 applies to employment in the United States. |
+| 7.5 | Successors. Any successor (whether direct or indirect, by purchase, merger, consolidation or otherwise) to all or substantially all of the Company’s business or assets, shall assume the Company’s liabilities under this Plan and perform any duties and responsibilities in the same manner and to the same extent that the Company would be required to perform if no such succession had taken place.                                                                                                                                                                                                                                                                                                                               |
+
+- **7**: References\. All statutory and regulatory references in this Plan include successor provisions\.
+- **7**: Severability\. If any provision of the Plan is held invalid or illegal for any reason, any illegality or invalidity shall not affect the remaining parts of the Plan, but the Plan shall be construed and enforced as if the illegal or invalid provision had never been inserted\.
+- **7**: Applicable Law and Venue\. The Plan shall be governed by the laws of the State of Washington\. If the Company or any Participant \(or beneficiary\) initiates litigation related to this Plan, the venue for such action will be in King County, Washington\.
