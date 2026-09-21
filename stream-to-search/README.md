@@ -1,6 +1,6 @@
-# stream-to-search
+# Real-time anomaly detection with AI
 
-A controlled, demo-able environment showing a seamlessly simple developer experience
+A controlled, demo-able environment showing a simple developer experience
 for problems that need both real-time event streaming (Kafka) and search & analytics
 (ClickHouse). The use case is anomaly detection, with an AI agent that explains the
 anomalies it finds.
