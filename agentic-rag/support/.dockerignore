@@ -6,3 +6,4 @@
 !runtime_health.py
 !container-entrypoint.sh
 !opensearch
+!.env

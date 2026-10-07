@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 #!/usr/bin/env python3
-"""Validate Episode 1 without starting agents or changing application source.
+"""Validate Task 1 without starting agents or changing application source.
 
 Default: check Python/packages, source configuration, all three containers,
 OpenSearch k-NN read/write, and small paid model completions. Capture the actual
@@ -32,9 +32,9 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Callable
 
-COMPONENTS = ("2-news-agent", "3-financials-agent", "4-orchestrator-agent")
+COMPONENTS = ("scripts/news-agent", "scripts/financials-agent", "scripts/orchestrator-agent")
 SCRIPT_DIR = Path(__file__).resolve().parent
-TRUE_VALUES = {"1", "true", "yes", "on"}
+TRUE_VALUES = {"1", "true", "y", "yes", "on"}
 
 # This worker executes only configuration loading and model-call construction.
 # A capture-only SDK client stops before any network operation or model response.
@@ -45,7 +45,7 @@ from pathlib import Path
 logging.disable(logging.CRITICAL)
 sys.path.insert(0, os.getcwd())
 component = sys.argv[1]
-config_module = 'src.host_agent.config' if component == '4-orchestrator-agent' else 'src.common.config'
+config_module = 'src.host_agent.config' if component == 'scripts/orchestrator-agent' else 'src.common.config'
 settings = importlib.import_module(config_module).load_settings()
 config = dataclasses.asdict(settings)
 for name in list(config):
@@ -80,12 +80,12 @@ async def capture(label, role, coroutine):
         raise RuntimeError('Expected an SDK call from ' + label)
 async def main():
     messages = [{'role': 'user', 'content': 'Setup probe.'}]
-    if component == '2-news-agent':
+    if component == 'scripts/news-agent':
         from src.news_agent.llm import LocalModelGateway
         gateway = LocalModelGateway(settings)
         await capture('planning/verification', 'orch', gateway.orchestrator_completion(messages))
         await capture('synthesis', 'llm', gateway.generator_completion(messages))
-    elif component == '3-financials-agent':
+    elif component == 'scripts/financials-agent':
         from src.financials_agent.llm import OpenAIModelGateway
         from src.financials_agent.models import FinancialPlan
         gateway = OpenAIModelGateway(settings)
@@ -346,7 +346,7 @@ def check_embeddings(repo: Path, timeout: float) -> str:
         "assert abs(float(np.linalg.norm(v))-1.0)<0.01; "
         "print('Embedding dimension:', len(v))"
     )
-    process = subprocess.run([sys.executable, "-c", code], cwd=repo / "2-news-agent",
+    process = subprocess.run([sys.executable, "-c", code], cwd=repo / "scripts/news-agent",
                              capture_output=True, text=True, timeout=timeout)
     if process.returncode:
         raise CheckError("Embedding inference failed: " + process.stderr[-1400:])
@@ -398,7 +398,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def finish_validation(validator: Validator, json_report: Path | None,
-                      summary: str, *, scope: str = "episode-1") -> int:
+                      summary: str, *, scope: str = "task-1") -> int:
     """Print a summary and optionally write the same redacted report contract."""
     code = validator.exit_code()
     print("\n" + summary)
@@ -449,11 +449,11 @@ def main() -> int:
             except Exception as exc:
                 validator.record(component + " source inspection", "FAIL", exc)
         summary = (
-            "INCOMPLETE — source inspection passed; infrastructure and inference were not tested"
-            if validator.exit_code() == 2 else "NOT READY — resolve source inspection failures"
+            "INCOMPLETE - source inspection passed; infrastructure and inference were not tested"
+            if validator.exit_code() == 2 else "NOT READY - resolve source inspection failures"
         )
         return finish_validation(validator, args.json_report, summary, scope="model-request-inspection")
-    validator.record("Scope", "INFO", "Episode 1 readiness only; no specialist, MCP, or Orchestrator service is expected yet.")
+    validator.record("Scope", "INFO", "Task 1 readiness only; no specialist, MCP, or Orchestrator service is expected yet.")
     if sys.version_info[:2] == (3, 12):
         validator.record("Python", "PASS", f"{platform.python_version()} on {platform.system()}/{platform.machine()}")
     else:
@@ -464,7 +464,7 @@ def main() -> int:
     missing = [part for part in COMPONENTS if not (repo / part / "Makefile").is_file()]
     validator.record("Repository", "FAIL" if missing else "PASS", "Missing components: " + ", ".join(missing) if missing else f"All three component Makefiles exist at {repo}.")
     if not env_true("USE_EXTERNAL_AI"):
-        validator.record("External inference", "FAIL", "Set USE_EXTERNAL_AI=true. This episode does not start local LLM servers.")
+        validator.record("External inference", "FAIL", "Set USE_EXTERNAL_AI=true. This task does not start local LLM servers.")
     else:
         validator.record("External inference", "PASS", "OpenAI mode." if env_true("USE_EXTERNAL_OPENAI") else "Third-party OpenAI-compatible mode.")
 
@@ -496,41 +496,42 @@ def main() -> int:
             except Exception as exc:
                 validator.record(component + " configuration", "FAIL", exc)
 
-    host = os.environ.get("OPENSEARCH_HOST", "127.0.0.1" if args.native else "opensearch-single")
-    port = os.environ.get("OPENSEARCH_PORT", "9200")
-    base = f"{'https' if env_true('OPENSEARCH_SSL') else 'http'}://{host}:{port}"
-    for component in ("2-news-agent", "3-financials-agent"):
-        cfg = snapshots.get(component, {}).get("config", {})
-        if cfg and (cfg["opensearch_host"] != host or str(cfg["opensearch_port"]) != port or cfg["opensearch_ssl"] != env_true("OPENSEARCH_SSL")):
-            validator.record(component + " OpenSearch target", "FAIL", "Agent configuration does not match the OpenSearch address being validated.")
-    def opensearch_check() -> str:
-        health = wait_json(base + "/_cluster/health", cluster_ready, seconds=args.wait_seconds)
-        info = json_request(base)
-        version = info.get("version", {}).get("number")
-        if version != "3.5.0":
-            raise CheckError(f"Expected OpenSearch 3.5.0, received {version!r}.")
-        return f"{base}; version {version}; cluster {health['status']}. Yellow is acceptable for a single-node lab."
-    os_ok = validator.run("OpenSearch", opensearch_check)
-    if os_ok:
-        validator.run("OpenSearch vector read/write", lambda: check_vector_roundtrip(base))
-    dashboard_base = os.environ.get("OPENSEARCH_DASHBOARDS_URL", "http://127.0.0.1:5601" if args.native else "http://opensearch-single-dashboards:5601").rstrip("/")
-    def dashboard_check() -> str:
-        data = wait_json(dashboard_base + "/api/status", dashboards_ready, seconds=args.wait_seconds)
-        version = data.get("version", {}).get("number")
-        if version != "3.5.0":
-            raise CheckError(f"Expected Dashboards 3.5.0, received {version!r}.")
-        return "Dashboards 3.5.0 reports available/green, including its OpenSearch connection."
-    validator.run("OpenSearch Dashboards", dashboard_check)
-    if args.native:
-        validator.record("User container", "SKIP", "Not applicable to native Python mode.")
-    else:
-        def runtime_check() -> str:
-            url = os.environ.get("LAB_HEALTH_URL", "http://lab:8088/healthz")
-            data = wait_json(url, lambda d: d.get("service") == "agentic-lab" and d.get("status") == "ok" and d.get("repository_ready") is True, seconds=args.wait_seconds)
-            if not str(data.get("python", "")).startswith("3.12."):
-                raise CheckError("User container readiness endpoint reports an unexpected Python version.")
-            return "User container is reachable through network DNS and its workspace is ready."
-        validator.run("User container", runtime_check)
+    # Switched to Instaclustr instance
+    # host = os.environ.get("OPENSEARCH_HOST", "127.0.0.1" if args.native else "opensearch-single")
+    # port = os.environ.get("OPENSEARCH_PORT", "9200")
+    # base = f"{'https' if env_true('OPENSEARCH_SSL') else 'http'}://{host}:{port}"
+    # for component in ("scripts/news-agent", "scripts/financials-agent"):
+    #     cfg = snapshots.get(component, {}).get("config", {})
+    #     if cfg and (cfg["opensearch_host"] != host or str(cfg["opensearch_port"]) != port or cfg["opensearch_ssl"] != env_true("OPENSEARCH_SSL")):
+    #         validator.record(component + " OpenSearch target", "FAIL", "Agent configuration does not match the OpenSearch address being validated.")
+    # def opensearch_check() -> str:
+    #     health = wait_json(base + "/_cluster/health", cluster_ready, seconds=args.wait_seconds)
+    #     info = json_request(base)
+    #     version = info.get("version", {}).get("number")
+    #     if version != "3.6.0":
+    #         raise CheckError(f"Expected OpenSearch 3.6.0, received {version!r}.")
+    #     return f"{base}; version {version}; cluster {health['status']}. Yellow is acceptable for a single-node lab."
+    # os_ok = validator.run("OpenSearch", opensearch_check)
+    # if os_ok:
+    #     validator.run("OpenSearch vector read/write", lambda: check_vector_roundtrip(base))
+    # dashboard_base = os.environ.get("OPENSEARCH_DASHBOARDS_URL", "http://127.0.0.1:5601" if args.native else "http://opensearch-single-dashboards:5601").rstrip("/")
+    # def dashboard_check() -> str:
+    #     data = wait_json(dashboard_base + "/api/status", dashboards_ready, seconds=args.wait_seconds)
+    #     version = data.get("version", {}).get("number")
+    #     if version != "3.6.0":
+    #         raise CheckError(f"Expected Dashboards 3.6.0, received {version!r}.")
+    #     return "Dashboards 3.6.0 reports available/green, including its OpenSearch connection."
+    # validator.run("OpenSearch Dashboards", dashboard_check)
+    # if args.native:
+    #     validator.record("User container", "SKIP", "Not applicable to native Python mode.")
+    # else:
+    #     def runtime_check() -> str:
+    #         url = os.environ.get("LAB_HEALTH_URL", "http://lab:8088/healthz")
+    #         data = wait_json(url, lambda d: d.get("service") == "agentic-lab" and d.get("status") == "ok" and d.get("repository_ready") is True, seconds=args.wait_seconds)
+    #         if not str(data.get("python", "")).startswith("3.12."):
+    #             raise CheckError("User container readiness endpoint reports an unexpected Python version.")
+    #         return "User container is reachable through network DNS and its workspace is ready."
+    #     validator.run("User container", runtime_check)
 
     if args.skip_models:
         validator.incomplete = True
@@ -562,10 +563,10 @@ def main() -> int:
     if args.check_embeddings and not missing:
         validator.run("Local embedding inference", lambda: check_embeddings(repo, args.embedding_timeout))
     else:
-        validator.record("Embedding model download", "SKIP", "Optional. Add --check-embeddings to cache weights and test local inference before Episode 2.")
-    validator.record("Later-episode services", "SKIP", "News, Financials, Orchestrator, Tavily MCP, Finnhub MCP, and real corpus ingestion are deliberately not tested in Episode 1.")
+        validator.record("Embedding model download", "SKIP", "Optional. Add --check-embeddings to cache weights and test local inference before Task 2.")
+    validator.record("Later-task services", "SKIP", "News, Financials, Orchestrator, Tavily MCP, Finnhub MCP, and real corpus ingestion are deliberately not tested in Task 1.")
     code = validator.exit_code()
-    summary = "READY FOR EPISODE 2" if code == 0 else "INCOMPLETE — run the model checks before continuing" if code == 2 else "NOT READY — resolve failed checks and rerun"
+    summary = "READY FOR TASK 2" if code == 0 else "INCOMPLETE - run the model checks before continuing" if code == 2 else "NOT READY - resolve failed checks and rerun"
     return finish_validation(validator, args.json_report, summary)
 
 

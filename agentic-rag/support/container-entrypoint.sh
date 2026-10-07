@@ -1,7 +1,7 @@
+#!/usr/bin/env bash
 # Copyright 2026 NetApp Instaclustr contributors. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-#!/usr/bin/env bash
 set -euo pipefail
 
 readonly SOURCE_REPO=/opt/lab/repository
@@ -20,7 +20,7 @@ if [[ ! -f "$TARGET_REPO/.lab-revision" ]]; then
     echo "Initialized the persistent lab workspace from the image's stripped clone."
 fi
 
-for component in 2-news-agent 3-financials-agent 4-orchestrator-agent 5-client; do
+for component in scripts/news-agent scripts/financials-agent scripts/orchestrator-agent scripts/client; do
     if [[ ! -f "$TARGET_REPO/$component/Makefile" ]]; then
         echo "ERROR: Missing $component/Makefile in $TARGET_REPO" >&2
         exit 1

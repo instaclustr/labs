@@ -2,11 +2,20 @@
 .DS_Store
 .env
 .env.*
-!.env.openai.example
-!.env.nebius.example
 __pycache__/
 *.pyc
+
+# agentic rag
+!.env.openai.example
+!.env.nebius.example
 validation-report*.json
+ai_media_dataset_20250911-1000lines.csv
+quarterly_filings
+
+# build
+agentic-rag/support/opensearch
+agentic-rag/support/commands.txt
+opensearch-users.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
