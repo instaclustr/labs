@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import os
 import sys
 from pathlib import Path
 from typing import Callable, List, Tuple
@@ -29,7 +30,7 @@ from typing import Callable, List, Tuple
 SUPPORT_DIR = Path(__file__).resolve().parent
 LAB_ROOT = SUPPORT_DIR.parent
 MIN_PYTHON = (3, 10)
-MAX_TESTED_PYTHON = (3, 11)  # the lab itself was run on 3.10
+RECOMMENDED_PYTHON = (3, 12)  # default compatibility-test target
 
 TASK_DIRS = (
     "baseline-vector-rag",
@@ -48,6 +49,7 @@ REQUIRED_MODULES = {
     "flask": "flask",
     "dotenv": "python-dotenv",
     "requests": "requests",
+    "openai": "openai",
     "boto3": "boto3",
     "sentence_transformers": "sentence-transformers",
     "tqdm": "tqdm",
@@ -62,14 +64,12 @@ Result = Tuple[bool, str]
 def check_python() -> Result:
     found = sys.version_info[:3]
     text = ".".join(str(p) for p in found)
-    if found >= MIN_PYTHON + (0,):
-        if found[:2] > MAX_TESTED_PYTHON:
-            return True, (
-                f"WARN: Python {text} is newer than the 3.10/3.11 this lab supports; the pinned "
-                "spacy==3.5.0 and numpy<2.0 may fail to install"
-            )
-        return True, f"Python {text}"
-    return False, f"Python {text} found; 3.10 or 3.11 is required"
+    recommended = ".".join(str(p) for p in RECOMMENDED_PYTHON)
+    if found < MIN_PYTHON + (0,):
+        return False, f"Python {text} found; Python 3.10+ is required (3.12 recommended)"
+    if found[:2] == RECOMMENDED_PYTHON:
+        return True, f"Python {text} (recommended version)"
+    return True, f"Python {text}; Python {recommended} is the default recommended version"
 
 
 def check_layout() -> Result:
@@ -98,15 +98,25 @@ def check_dependencies() -> Result:
 def check_spacy_model() -> Result:
     if importlib.util.find_spec("spacy") is None:
         return False, "spaCy is not installed, so the model cannot be checked"
-    import warnings
+    # Match the model selected by the NER service when configured in the shell.
+    model_name = os.getenv("SPACY_MODEL", SPACY_MODEL)
+    hint = f"run: python -m spacy download {model_name}"
+    try:
+        import spacy
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")  # spaCy 3.5 imports pkg_resources, which warns
-        import spacy.util
-
-    if spacy.util.is_package(SPACY_MODEL):
-        return True, f"spaCy model {SPACY_MODEL} installed"
-    return False, f"spaCy model {SPACY_MODEL} missing (run: python -m spacy download {SPACY_MODEL})"
+        if not spacy.util.is_package(model_name):
+            return False, f"spaCy model {model_name} missing ({hint})"
+        model_path = spacy.util.get_package_path(model_name)
+        metadata = spacy.util.get_model_meta(model_path)
+        required_version = metadata.get("spacy_version")
+        if required_version and not spacy.util.is_compatible_version(spacy.__version__, required_version):
+            return False, f"spaCy model {model_name} is incompatible with spaCy {spacy.__version__} ({hint})"
+        nlp = spacy.load(model_name)
+        if "ner" not in nlp.pipe_names:
+            return False, f"spaCy model {model_name} does not contain an NER component"
+    except Exception as exc:  # report the error class, not environment values
+        return False, f"spaCy model {model_name} could not load ({type(exc).__name__}; {hint})"
+    return True, f"spaCy {spacy.__version__}; model {model_name} loaded"
 
 
 def _settings():
@@ -117,21 +127,26 @@ def _settings():
 
 
 def check_env_file() -> Result:
-    # Same lookup order as common.config: the current directory first, then the lab root.
+    # Match common.config: current directory, lab root, then support/.env.
     if (Path.cwd() / ".env").is_file():
         where = "at the lab root" if Path.cwd().resolve() == LAB_ROOT else "in the current directory"
         return True, f".env found {where}"
     if (LAB_ROOT / ".env").is_file():
         return True, ".env found at the lab root"
+    if (SUPPORT_DIR / ".env").is_file():
+        return True, ".env found in support/"
+    if os.getenv("LAB_CONTAINER", "").strip().lower() in ("1", "true", "yes", "on"):
+        # Compose injects support/.env at runtime. It must not be baked into the
+        # image or copied into the persistent workspace. Settings are checked next.
+        return True, "runtime environment mode; required settings are checked separately"
     return False, ".env not found (copy support/.env.example to .env at the lab root and fill it in)"
 
 
 def check_configuration() -> Result:
     if importlib.util.find_spec("dotenv") is None:
         return False, "python-dotenv is not installed, so configuration cannot be loaded"
-    from common.config import require_configured  # noqa: WPS433
-
     settings = _settings()
+    from common.config import require_configured  # noqa: WPS433
     try:
         require_configured(settings)
     except RuntimeError as exc:

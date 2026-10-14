@@ -13,9 +13,9 @@ format. Two providers are supported, selected via ``LLM_PROVIDER`` in
   credentials file, or an assumed role).
 - ``openai``: any OpenAI-compatible ``/chat/completions`` endpoint (OpenAI
   itself, or a self-hosted/alternate provider that speaks the same API),
-  for anyone without Bedrock access. Uses ``requests`` directly rather than
-  the ``openai`` SDK so this path adds no new dependency and the Bedrock
-  path stays fully import-isolated from it.
+  for anyone without Bedrock access. Uses the official ``openai`` Python SDK,
+  imported only when this provider is selected. The 60-second timeout and
+  single-attempt behavior are retained (SDK retries are disabled).
 """
 from __future__ import annotations
 
@@ -24,7 +24,6 @@ from functools import lru_cache
 from typing import Optional
 
 import boto3
-import requests
 
 from .config import Settings, load_settings
 from .logging import get_logger
@@ -94,28 +93,33 @@ def _generate_openai(
     body = {
         "model": settings.openai_model,
         "messages": messages,
-        "max_tokens": int(max_tokens if max_tokens is not None else settings.bedrock_max_tokens),
+        "max_completion_tokens": int(max_tokens if max_tokens is not None else settings.bedrock_max_tokens),
         "temperature": float(temperature if temperature is not None else settings.bedrock_temperature),
     }
 
-    url = settings.openai_base_url.rstrip("/") + "/chat/completions"
-    LOGGER.info("Invoking OpenAI-compatible model '%s' at %s", settings.openai_model, url)
-    response = requests.post(
-        url,
-        headers={
-            "Authorization": f"Bearer {settings.openai_api_key}",
-            "Content-Type": "application/json",
-        },
-        json=body,
-        timeout=60,
-    )
-    response.raise_for_status()
-    payload = response.json()
+    # Keep the SDK optional at import time for callers using only Bedrock.
+    from openai import OpenAI
 
-    choices = payload.get("choices", [])
-    if choices:
-        return str(choices[0].get("message", {}).get("content", "")).strip()
-    return str(payload).strip()
+    LOGGER.info("Invoking OpenAI-compatible model '%s'", settings.openai_model)
+    # Preserve the existing chat-completions payload, including max_completion_tokens,
+    # for compatible endpoints. Do not silently retry a billable lab request.
+    with OpenAI(
+        base_url=settings.openai_base_url,
+        api_key=settings.openai_api_key,
+        timeout=60.0,
+        max_retries=0,
+    ) as client:
+        response = client.chat.completions.create(**body)
+
+    if not response.choices:
+        raise RuntimeError("The OpenAI-compatible endpoint returned no completion choices.")
+    message = response.choices[0].message
+    if message.content is None:
+        refusal = getattr(message, "refusal", None)
+        if refusal:
+            return refusal.strip()
+        raise RuntimeError("The OpenAI-compatible endpoint returned no text content.")
+    return message.content.strip()
 
 
 def generate(

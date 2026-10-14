@@ -13,7 +13,7 @@ entries also appear in each task's own troubleshooting page.
 
 | Failing check | Meaning and fix |
 | --- | --- |
-| `python` | Python is older than 3.10 (`[FAIL]`), or newer than 3.11 (`[WARN]`, untested: `pip install` of the pinned `spacy==3.5.0` may fail). Recreate `.venv` with Python 3.10 or 3.11. |
+| `python` | Python is older than 3.10. Recreate `.venv` with Python 3.12, the default recommended version, or another Python 3.10+ interpreter supported by the dependencies. |
 | `layout` | A file or task folder is missing (including `support/recipes/recipes_sample.json`), or you're running a copy that isn't the lab root. Open the directory containing `README.md` and `scripts/`. |
 | `dependencies` | A package is missing, usually because `.venv` isn't active. Activate it and rerun `pip install -r support/requirements.txt`. |
 | `spacy-model` | See the `en_core_web_sm` entry below. |
@@ -51,7 +51,16 @@ which isn't installed by `pip install -r support/requirements.txt` alone:
 python -m spacy download en_core_web_sm
 ```
 
-If that command prints `ERROR: Invalid requirement: '==en_core_web_sm'` or `You can now load the package via spacy.load('')`, an environment with `click` 8.2 or newer was created (spaCy 3.5.0's CLI uses typer 0.7, which loses the model name under newer click). `requirements.txt` pins `click<8.2`; run `pip install -r support/requirements.txt` again, or `pip install "click<8.2"`, then retry. Installing the model directly also works: `pip install https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.5.0/en_core_web_sm-3.5.0-py3-none-any.whl`.
+After upgrading spaCy, reinstall a matching model rather than keeping an older English-model package. The setup validator checks both compatibility and loading. For an existing environment, run:
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install --upgrade -r support/requirements.txt
+python -m spacy download en_core_web_sm
+python -m spacy validate
+```
+
+If the environment still contains dependency conflicts from an older installation, recreate `.venv` with Python 3.12 and repeat Task 1. Do not restore the old setuptools, click, or NumPy caps. The workshop does not use negspacy.
 
 ### `CERTIFICATE_VERIFY_FAILED: unable to get local issuer certificate`
 

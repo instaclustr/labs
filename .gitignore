@@ -4,6 +4,10 @@
 .env.*
 __pycache__/
 *.pyc
+**/commands.txt
+
+# rag retrieval
+.lab-revision
 
 # agentic rag
 !.env.openai.example
@@ -12,9 +16,8 @@ validation-report*.json
 ai_media_dataset_20250911-1000lines.csv
 quarterly_filings
 
-# build
+## build
 agentic-rag/support/opensearch
-agentic-rag/support/commands.txt
 opensearch-users.csv
 
 # Byte-compiled / optimized / DLL files

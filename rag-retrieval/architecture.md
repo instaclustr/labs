@@ -303,7 +303,7 @@ Add a new task, or a variation of one, by keeping to the same shape:
 
 ## 12. Verification and workflow
 
-**Targets.** From a task directory with the `.venv` active: `make install`, `make ingest`, `make query QUESTION="..."`, `make validate`, `make clean` (Task 7: `make monitor`, `make policy`). From the lab root: `python support/validate_setup.py`, optionally with `--check-opensearch`, `--check-embeddings` and `--check-ner`. The setup check requires Python 3.10 or 3.11 and warns on anything newer.
+**Targets.** From a task directory with the `.venv` active: `make install`, `make ingest`, `make query QUESTION="..."`, `make validate`, `make clean` (Task 7: `make monitor`, `make policy`). From the lab root: `python support/validate_setup.py`, optionally with `--check-opensearch`, `--check-embeddings` and `--check-ner`. The setup check accepts Python 3.10+; Python 3.12 is the default recommended version. The dependency set uses spaCy 3.8.16 and permits NumPy 2.
 
 **Acceptance scenarios.** These are the behaviors each task's `validate.py` asserts against live services:
 
@@ -316,13 +316,15 @@ Add a new task, or a variation of one, by keeping to the same shape:
 | Governance Tiering | Citation extraction and hallucination detection (offline); a hot-tier question resolves without escalation; a long-term-tier question escalates. |
 | Operationalize Production | Alert and drift logic (offline); the retention policy can be ensured; live governance stats are well formed. |
 
-**What was tested.** Python 3.10.0 on macOS; Instaclustr OpenSearch 3.6.0 (with the neural-search and index-management plugins); Amazon Bedrock with Claude Haiku 4.5; `all-MiniLM-L6-v2`; spaCy `en_core_web_sm` via the local service. Every task's setup, ingest, query and validate steps were run against these.
+**Recorded end-to-end baseline.** Before this dependency update, the lab was tested on Python 3.10 on macOS; Instaclustr OpenSearch 3.6.0 (with the neural-search and index-management plugins); Amazon Bedrock with Claude Haiku 4.5; `all-MiniLM-L6-v2`; spaCy `en_core_web_sm` via the local service. Every task's setup, ingest, query and validate steps were run against these.
 
 **Probes.** The `python - <<'PY'` probes on the task and concept pages were run against the same live services, and each page's **Expected** block is its real output. They read the indexes or the NER service and call no LLM; none writes to the cluster. They are teaching aids and are not part of any `validate.py`. Probes that print scores reproduce the ranking and counts, and the scores themselves drift with the index.
 
-**What was not tested.** Python 3.11 (accepted by the setup check, but not run) and 3.12 or newer (warned about); the OpenAI provider path; non-macOS systems (the CA-bundle self-heal does nothing there); other OpenSearch versions; larger data than the 260-recipe sample; concurrent users.
+**Default compatibility target.** Python 3.12 is the default recommended interpreter. The setup check accepts Python 3.10 and newer without an upper-version gate; package metadata determines which newer interpreters can install the full dependency set.
 
-**What does not exist.** There is no unit-test suite, no CI, and no automated build. The `validate.py` scripts are smoke tests that need live services, and several fail if the NER service is not running. Treat a green run as "the demonstrated behavior still holds on this data", not as regression coverage.
+**Verification boundaries.** The recorded end-to-end baseline above is not evidence of a new end-to-end run on Python 3.12 or spaCy 3.8.16. Live OpenAI calls, the updated dependency stack against Instaclustr/Bedrock, non-macOS systems (the CA-bundle self-heal does nothing there), other OpenSearch versions, larger data than the 260-recipe sample, and concurrent users still require integration verification.
+
+**Regression checks.** The `tests/` suite covers SDK request construction, configuration/root resolution, Python version policy, and spaCy model validation without hosted services. Install `support/requirements-test.txt` after the shared requirements, then run `python -m unittest discover -s tests -v`. Tests using the real SDK and NER model are skipped when those dependencies are absent; skipped checks are not passes. No CI workflow is included. The task `validate.py` scripts remain live-service smoke tests, and several require the NER service. Treat a green task run as "the demonstrated behavior still holds on this data", not exhaustive retrieval-regression coverage.
 
 **Suggested workflow for a change.** Read the task's source map under `references/`; change the shared module first if the change is shared; rerun `make validate` in every task that imports it (a change in `opensearch_client.py` can affect Tasks 2 to 7); update the task page if a command, output or number changed; check that links and anchors still resolve.
 

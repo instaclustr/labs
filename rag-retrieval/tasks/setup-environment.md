@@ -32,7 +32,7 @@ The cluster and the LLM provider are paid services, so check each provider's pri
 
 ## Before you begin
 
-You need a Bash or zsh terminal, Git, and Python 3.10 or 3.11 with `venv` (the lab was tested on 3.10; newer versions are untested, and the pinned `spacy==3.5.0` may not install on them). The accounts above must exist, and for Bedrock, model access must already show as granted in the AWS console.
+You need a Bash or zsh terminal, Git, and Python 3.10 or newer with `venv` (Python 3.12 is the default recommended version). The accounts above must exist, and for Bedrock, model access must already show as granted in the AWS console.
 
 Installing dependencies downloads packages from PyPI and the spaCy model. Running any task later also downloads the embedding model into `.cache/` on first use. Keep `.env` private: it holds your cluster password and LLM credentials, and it is git-ignored for that reason.
 
@@ -57,7 +57,9 @@ pip install -r support/requirements.txt
 python -m spacy download en_core_web_sm   # needed by Baseline BM25 RAG's ner_service.py, which Hybrid RAG (NER + Rerank) through Operationalize Production reuse
 ```
 
-**Expected:** each command finishes without an error, and your prompt shows the activated `.venv`. spaCy may print a `pkg_resources is deprecated` warning when it is imported; it is harmless (`requirements.txt` pins `setuptools<81` so `pkg_resources` stays available). Leave this shell active; every later task reuses it. If the spaCy download fails, see [setup troubleshooting](../troubleshooting/setup-environment.md).
+Use `python3.12` above for the default environment, or the executable for another installed Python 3.10+ version. Dependency availability still depends on that interpreter and platform.
+
+**Expected:** each command finishes without an error, and your prompt shows the activated `.venv`. The shared requirements install spaCy 3.8.16 and the official OpenAI Python SDK. The spaCy download selects a compatible `en_core_web_sm` model. Leave this shell active; every later task reuses it. If the spaCy download fails, see [setup troubleshooting](../troubleshooting/setup-environment.md).
 
 ## Step 3: configure
 
@@ -97,10 +99,10 @@ python support/validate_setup.py
 **Expected:** a `[PASS]` line for each of `python`, `layout`, `dependencies`, `spacy-model`, `env-file`, `configuration`, and `index-names`, plus `aws-credentials` if `LLM_PROVIDER` is `bedrock` (the default), followed by `Setup check passed.` and exit code 0. Sample output (the `python` line shows your version, `index-names` lists the names from your `.env`, and `aws-credentials` names the credential source it found):
 
 ```text
-[PASS] python: Python 3.10.0
+[PASS] python: Python 3.12 (recommended version)
 [PASS] layout: README, architecture, support and 6 task folders present
-[PASS] dependencies: 11 required packages importable
-[PASS] spacy-model: spaCy model en_core_web_sm installed
+[PASS] dependencies: 12 required packages importable
+[PASS] spacy-model: spaCy 3.8.16; model en_core_web_sm loaded
 [PASS] env-file: .env found at the lab root
 [PASS] configuration: required OpenSearch and LLM settings are present
 [PASS] index-names: index names in use: OPENSEARCH_VECTOR_RECIPES_BASELINE_INDEX=recipes-vector-baseline, ...
@@ -108,7 +110,7 @@ python support/validate_setup.py
 Setup check passed.
 ```
 
-If a line says `[FAIL]`, it names what is missing (for example `OPENSEARCH_HOST is not set to a real Instaclustr host`). Fix it in `.env` or the environment and rerun. `[SKIP]` lines mean an earlier failure blocked that check, and a `[WARN]` line (for example, a Python version newer than 3.11) doesn't fail the run. The `aws-credentials` check only looks for credentials; it doesn't call AWS, so it can't tell whether Bedrock model access is granted.
+If a line says `[FAIL]`, it names what is missing (for example `OPENSEARCH_HOST is not set to a real Instaclustr host`). Fix it in `.env` or the environment and rerun. `[SKIP]` lines mean an earlier failure blocked that check, and a `[WARN]` line does not fail the run. The version check accepts Python 3.10+ without warning merely because it is newer than 3.12. The `aws-credentials` check only looks for credentials; it doesn't call AWS, so it can't tell whether Bedrock model access is granted.
 
 The offline check confirms that values are present, not that the cluster or model accepts them. To also confirm that the cluster answers and the embedding model loads, add the two optional flags (a third, `--check-ner`, confirms the local NER service answers once you've started it in Baseline BM25 RAG):
 

@@ -89,7 +89,7 @@ Setup problems: [`troubleshooting/setup-environment.md`](troubleshooting/setup-e
 
 ## Getting Started
 
-This lab is the `rag-retrieval/` folder of the [instaclustr/labs](https://github.com/instaclustr/labs) repository; Task 1 shows how to clone it. You need Python 3.10 or 3.11 (the lab was tested on 3.10). The only accounts you need are an [Instaclustr](https://www.instaclustr.com/) OpenSearch cluster and one LLM provider, either AWS Bedrock with model access enabled or an OpenAI-compatible API key. Task 1 walks through the environment, the dependencies, and the one `.env` file every task shares, and ends with a configuration check.
+This lab is the `rag-retrieval/` folder of the [instaclustr/labs](https://github.com/instaclustr/labs) repository; Task 1 shows how to clone it. You need Python 3.10 or newer; Python 3.12 is the default recommended version. The only accounts you need are an [Instaclustr](https://www.instaclustr.com/) OpenSearch cluster and one LLM provider, either AWS Bedrock with model access enabled or an OpenAI-compatible API key. Task 1 walks through the environment, the dependencies, and the one `.env` file every task shares, and ends with a configuration check.
 
 Every task runs from its own directory under `scripts/`, with `python -m src.<module>` or the matching `make` target. Some tasks need the local NER service from Baseline BM25 RAG running in a second terminal. Each task page says when.
 
