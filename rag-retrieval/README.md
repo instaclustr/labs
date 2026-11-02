@@ -57,7 +57,7 @@ before they show up in production, not after.
 
 | This Lab | Local Laptop | CLI | Notebook | Videos |
 | --- | --- | --- | --- | --- |
-| **RAG Developer Journey** | [Getting Started](#getting-started) | _Coming soon:_<br>Codex<br>Claude<br>Cursor | _Coming soon_ | _Coming soon_ |
+| **RAG Developer Journey** | [Getting Started](#getting-started) | _Coming soon:_<br>Codex<br>Claude<br>Cursor | _[Notebooks](https://github.com/instaclustr/code-samples/tree/main/Labs/rag-retrieval)_ | _Coming soon_ |
 
 ## Tasks
 
@@ -101,7 +101,7 @@ Coming Soon
 
 ## Jupyter Notebook
 
-Coming Soon
+Run the query-only version of this journey as Jupyter notebooks against a shared, read-only OpenSearch cluster. See [Labs/rag-retrieval](https://github.com/instaclustr/code-samples/tree/main/Labs/rag-retrieval) in `instaclustr/code-samples`.
 
 ## Videos
 
