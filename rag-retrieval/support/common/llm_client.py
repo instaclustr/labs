@@ -46,8 +46,8 @@ def _generate_bedrock(
 ) -> str:
     if not settings.bedrock_model_id:
         raise RuntimeError(
-            "BEDROCK_MODEL_ID is not set. Add it to your .env, e.g. "
-            "BEDROCK_MODEL_ID=anthropic.claude-3-5-sonnet-20241022-v2:0"
+            "BEDROCK_MODEL_ID is not set. Add it to your .env, using the exact model ID "
+            "(or inference profile ID) shown for your account in the Bedrock console."
         )
 
     body = {

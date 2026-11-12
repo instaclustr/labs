@@ -1,0 +1,10 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+.DS_Store
+*.gguf
+*.jsonl
+.pytest_cache/
+.cache/
+

@@ -54,6 +54,71 @@ def create_client(settings: Optional[Settings] = None) -> OpenSearch:
 # and recipe_knn_search() further down. Kept only because they are exported below.
 # ---------------------------------------------------------------------------
 
+class OldLayoutIndexError(RuntimeError):
+    """A query found an index with the older one-document-per-recipe layout.
+
+    Queries never delete an index. Run the task's ingest, which replaces such an index.
+    """
+
+
+def drop_index(client: OpenSearch, index_name: str) -> None:
+    """Delete an index if it exists. Ingest scripts call this for `--recreate`, which rebuilds
+    an index from empty. An index with the older one-document-per-recipe layout does not need
+    it: the ingest scripts pass `replace_old_layout=True` to the `ensure_*` functions, which
+    replace it (see `drop_if_old_layout`)."""
+    if client.indices.exists(index=index_name):
+        LOGGER.info("Deleting index '%s'", index_name)
+        client.indices.delete(index=index_name)
+
+
+def has_old_layout(client: OpenSearch, index_name: str) -> bool:
+    """True if `index_name` exists but holds the older one-document-per-recipe layout.
+
+    The recipe indexes now hold chunks, and every chunk has a `chunk_id` field. An existing
+    index whose mapping has no `chunk_id` is from the older version of this lab. Read-only.
+    """
+    if not client.indices.exists(index=index_name):
+        return False
+    mapping = client.indices.get_mapping(index=index_name)
+    properties: Dict[str, Any] = {}
+    for body in mapping.values():  # one entry; keyed by the concrete index name (alias-safe)
+        properties = (body.get("mappings") or {}).get("properties") or {}
+        break
+    return "chunk_id" not in properties
+
+
+def drop_if_old_layout(client: OpenSearch, index_name: str) -> bool:
+    """Delete `index_name` if it exists but holds the older one-document-per-recipe layout.
+
+    Leaving such an index in place would mix whole-recipe documents with chunks, so it is
+    deleted here and the caller's `ensure_*` function then creates it again with the chunk
+    mapping. An index that already has the chunk layout is never touched. Only ingest calls
+    this (through `replace_old_layout=True`); a query never deletes anything. Returns True
+    if an index was deleted.
+    """
+    if not has_old_layout(client, index_name):
+        return False
+    LOGGER.warning(
+        "Index '%s' has the older one-document-per-recipe layout (no chunk_id field); "
+        "deleting it and creating it again for chunks.",
+        index_name,
+    )
+    client.indices.delete(index=index_name)
+    return True
+
+
+def _check_layout(client: OpenSearch, index_name: str, replace_old_layout: bool) -> None:
+    """Ingest (`replace_old_layout=True`) replaces an old-layout index. A query stops with an error."""
+    if replace_old_layout:
+        drop_if_old_layout(client, index_name)
+    elif has_old_layout(client, index_name):
+        raise OldLayoutIndexError(
+            f"Index '{index_name}' exists but has the older one-document-per-recipe layout "
+            "(no chunk_id field). A query does not delete indexes. Run this task's ingest "
+            "(python -m src.ingest, or make ingest) to replace it with chunks."
+        )
+
+
 def ensure_vector_index(client: OpenSearch, index_name: str, dim: int) -> None:
     """Create a vector index for the legacy article schema (path/title/category/text + embedding). Unused by the tasks."""
     if client.indices.exists(index=index_name):
@@ -168,8 +233,14 @@ def bm25_entity_query(question: str, entities: List[str]) -> Dict[str, Any]:
 # Hybrid RAG (Native): single hybrid index (native OpenSearch hybrid pipeline, recipes)
 # ---------------------------------------------------------------------------
 
-def ensure_hybrid_index(client: OpenSearch, index_name: str, dim: int) -> None:
-    """Create the Hybrid RAG (Native) single index with both a text field and a knn_vector field."""
+def ensure_hybrid_index(client: OpenSearch, index_name: str, dim: int, *, replace_old_layout: bool = False) -> None:
+    """Create the Hybrid RAG (Native) single index with both a text field and a knn_vector field.
+
+    An existing chunk index is left as it is. An existing index with the older
+    one-document-per-recipe layout is deleted first when `replace_old_layout` is True (ingest),
+    and raises `OldLayoutIndexError` otherwise (query).
+    """
+    _check_layout(client, index_name, replace_old_layout)
     if client.indices.exists(index=index_name):
         return
     body = {
@@ -178,6 +249,10 @@ def ensure_hybrid_index(client: OpenSearch, index_name: str, dim: int) -> None:
             "properties": {
                 "recipe_id": {"type": "keyword"},
                 "recipe_name": {"type": "text", "fields": {"keyword": {"type": "keyword"}}},
+                "chunk_id": {"type": "keyword"},
+                "chunk_index": {"type": "integer"},
+                "chunk_count": {"type": "integer"},
+                "section": {"type": "keyword"},
                 "text": {"type": "text"},
                 "allergens": {"type": "keyword"},
                 "diet_labels": {"type": "keyword"},
@@ -197,7 +272,7 @@ def ensure_hybrid_index(client: OpenSearch, index_name: str, dim: int) -> None:
 HYBRID_PIPELINE_NAME = "hybrid-search-pipeline"
 
 
-def ensure_hybrid_pipeline(client: OpenSearch, *, bm25_weight: float = 0.3, vector_weight: float = 0.7) -> None:
+def ensure_hybrid_pipeline(client: OpenSearch, *, bm25_weight: float = 0.5, vector_weight: float = 0.5) -> None:
     """Create (or update) the native OpenSearch normalization/combination pipeline."""
     client.transport.perform_request(
         "PUT",
@@ -252,6 +327,7 @@ RECIPE_SOURCE_FIELDS = [
     "chunk_id",
     "chunk_index",
     "chunk_count",
+    "section",
     "text",
     "entities",
     "cautions",
@@ -267,7 +343,13 @@ RECIPE_SOURCE_FIELDS = [
 ]
 
 
-def ensure_recipe_vector_index(client: OpenSearch, index_name: str, dim: int) -> None:
+def ensure_recipe_vector_index(client: OpenSearch, index_name: str, dim: int, *, replace_old_layout: bool = False) -> None:
+    """Create a recipe chunk vector index.
+
+    An older one-document-per-recipe index is replaced when `replace_old_layout` is True
+    (ingest), and raises `OldLayoutIndexError` otherwise (query).
+    """
+    _check_layout(client, index_name, replace_old_layout)
     if client.indices.exists(index=index_name):
         return
     body = {
@@ -284,6 +366,7 @@ def ensure_recipe_vector_index(client: OpenSearch, index_name: str, dim: int) ->
                 "chunk_id": {"type": "keyword"},
                 "chunk_index": {"type": "integer"},
                 "chunk_count": {"type": "integer"},
+                "section": {"type": "keyword"},
                 "text": {"type": "text"},
                 "cautions": {"type": "keyword"},
                 "cautions_display": {"type": "keyword"},
@@ -307,7 +390,13 @@ def ensure_recipe_vector_index(client: OpenSearch, index_name: str, dim: int) ->
     client.indices.create(index=index_name, body=body)
 
 
-def ensure_recipe_bm25_index(client: OpenSearch, index_name: str) -> None:
+def ensure_recipe_bm25_index(client: OpenSearch, index_name: str, *, replace_old_layout: bool = False) -> None:
+    """Create a recipe chunk BM25 index.
+
+    An older one-document-per-recipe index is replaced when `replace_old_layout` is True
+    (ingest), and raises `OldLayoutIndexError` otherwise (query).
+    """
+    _check_layout(client, index_name, replace_old_layout)
     if client.indices.exists(index=index_name):
         return
     body = {
@@ -323,6 +412,7 @@ def ensure_recipe_bm25_index(client: OpenSearch, index_name: str) -> None:
                 "chunk_id": {"type": "keyword"},
                 "chunk_index": {"type": "integer"},
                 "chunk_count": {"type": "integer"},
+                "section": {"type": "keyword"},
                 "text": {"type": "text"},
                 "entities": {"type": "keyword"},
                 "cautions": {"type": "keyword"},
@@ -491,6 +581,21 @@ def build_recipe_vector_query(
     }
 
 
+def ann_pool_for_filtered_search(client: OpenSearch, index_name: str, minimum: int = 300) -> int:
+    """How many nearest neighbours the kNN step must consider so a filter cannot lose a candidate.
+
+    `build_recipe_vector_query` applies `include_recipe_ids` AFTER the approximate nearest-neighbour
+    search, so any candidate chunk outside the kNN's `k` nearest is silently dropped, however good
+    BM25 found it. Returning the index's whole document count makes the kNN step rank every chunk,
+    and the filter then only chooses among them. The index is small here (about 1,800 chunks); at
+    a much larger scale use the kNN query's own `filter` clause instead.
+    """
+    try:
+        return max(int(minimum), int(client.count(index=index_name)["count"]))
+    except (TransportError, NotFoundError, KeyError, ValueError):
+        return int(minimum)
+
+
 def recipe_knn_search(client: OpenSearch, index_name: str, query_vector: List[float], **kwargs) -> Dict[str, Any]:
     body = build_recipe_vector_query(query_vector, **kwargs)
     try:
@@ -527,6 +632,8 @@ def ensure_audit_index(client: OpenSearch, index_name: str) -> None:
                 "refined_sources": {"type": "keyword"},
                 "refined_cautions": {"type": "keyword"},
                 "evidence_handles": {"type": "keyword"},
+                "evidence_chunk_ids": {"type": "keyword"},
+                "pinned_named_sources": {"type": "keyword"},
                 "cited_handles": {"type": "keyword"},
                 "hallucinated_citations": {"type": "keyword"},
                 "citations_valid": {"type": "boolean"},
@@ -722,6 +829,10 @@ def normalize_hits(response: Dict[str, Any]) -> List[Dict[str, Any]]:
 
 __all__ = [
     "create_client",
+    "drop_index",
+    "drop_if_old_layout",
+    "has_old_layout",
+    "OldLayoutIndexError",
     "ensure_vector_index",
     "knn_search",
     "ensure_bm25_index",
@@ -738,6 +849,7 @@ __all__ = [
     "bm25_search",
     "build_recipe_vector_query",
     "recipe_knn_search",
+    "ann_pool_for_filtered_search",
     "normalize_hits",
     "RECIPE_SOURCE_FIELDS",
     "VECTOR_FIELD",

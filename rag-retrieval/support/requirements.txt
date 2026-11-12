@@ -13,3 +13,7 @@ sentence-transformers>=3.0.0
 tqdm>=4.66
 # Let pip select a compatible NumPy for each Python version, including NumPy 2.
 numpy>=1.26.4,<3.0
+# scipy comes in through sentence-transformers. On Python 3.10, its 1.15.x wheels contain a compiled library that
+# macOS 27 refuses to load (ImportError: dlopen ... _spropack ...), which breaks every import of sentence-transformers
+# there. 1.14.x avoids that; Python 3.11 and newer get a current scipy.
+scipy<1.15; python_version < "3.11"
