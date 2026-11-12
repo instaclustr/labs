@@ -20,9 +20,10 @@ def _configure() -> None:
         datefmt="%H:%M:%S",
     )
     # Third-party HTTP libraries are extremely chatty at INFO; keep their
-    # noise out unless the user explicitly asks for DEBUG.
+    # noise out unless the user explicitly asks for DEBUG. Newer
+    # huggingface_hub releases log through "httpx2", older ones through "httpx".
     if level != "DEBUG":
-        for noisy in ("httpx", "httpcore", "urllib3", "sentence_transformers", "huggingface_hub"):
+        for noisy in ("httpx", "httpx2", "httpcore", "urllib3", "sentence_transformers", "huggingface_hub"):
             logging.getLogger(noisy).setLevel(logging.WARNING)
     _CONFIGURED = True
 

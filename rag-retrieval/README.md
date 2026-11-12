@@ -77,7 +77,9 @@ These tasks are cumulative in setup and independent in content: Task 1 prepares 
 
 **What the retriever owns, and what the model does.** The retrieval steps in this lab decide which recipes, and which caution fields, reach the model. With the filters in Task 5, what is excluded stays excluded. The model then writes an answer from that text, and nothing in the retriever makes the wording correct. Task 6 checks that the answer's citations match what was retrieved and records the result; it does not block an answer.
 
-**A demonstration, not a benchmark.** The tasks use 260 recipes, one embedding model and a few questions, so they show *how* each approach fails and what fixes it, not *how often*. Scores and answer wording vary between runs.
+**About the data.** The recipes are a 260-recipe sample of a real dataset (names, sources, ingredients, allergen cautions and health labels). Tasks 2 to 6 split each recipe into chunks (1,823 in all) and search the chunks; see [Chunking](concepts/CHUNKING.md). The dataset has no method text, so the introduction, method and serving notes that give each recipe something to chunk are **synthetic**: an LLM wrote them from each recipe's ingredient list (`support/recipes/recipes_synthetic.json`). They are not the original websites' text and not tested recipes, so do not cook from them. The ingredients, cautions and labels, which decide every safety fact in the lab, come from the original dataset.
+
+**A demonstration, not a benchmark.** The tasks use 260 recipes, one embedding model and a few questions, so they show *how* each approach fails and what fixes it, not *how often*. Scores and answer wording vary between runs: scores can differ in the last digits between clusters, and hits with exactly equal scores can come back in a different order.
 
 **Concepts.** These pages explain the choices behind the tasks, with live probes on this lab's data: [BM25 versus kNN](concepts/BM25_VS_KNN.md), [embedding models](concepts/EMBEDDING_MODELS.md), [chunking](concepts/CHUNKING.md), [named-entity recognition](concepts/NER_IN_RETRIEVAL.md) and [choosing a retrieval approach](concepts/CHOOSING_RETRIEVAL.md). Why each piece of infrastructure was chosen is in [`INFRASTRUCTURE_CHOICES.md`](concepts/INFRASTRUCTURE_CHOICES.md).
 
@@ -89,7 +91,7 @@ Setup problems: [`troubleshooting/setup-environment.md`](troubleshooting/setup-e
 
 ## Getting Started
 
-This lab is the `rag-retrieval/` folder of the [instaclustr/labs](https://github.com/instaclustr/labs) repository; Task 1 shows how to clone it. You need Python 3.10 or newer; Python 3.12 is the default recommended version. The only accounts you need are an [Instaclustr](https://www.instaclustr.com/) OpenSearch cluster and one LLM provider, either AWS Bedrock with model access enabled or an OpenAI-compatible API key. Task 1 walks through the environment, the dependencies, and the one `.env` file every task shares, and ends with a configuration check.
+This lab is the `rag-retrieval/` folder of the [instaclustr/labs](https://github.com/instaclustr/labs) repository; Task 1 shows how to clone it. You need Python 3.10 or newer; Python 3.12 is the default recommended version. The only accounts you need are an [Instaclustr](https://www.instaclustr.com/) OpenSearch cluster and one LLM provider, either AWS Bedrock with model access enabled or an OpenAI-compatible API key (Bedrock is the path tested end to end; see Task 1 for the OpenAI note). Task 1 walks through the environment, the dependencies, and the one `.env` file every task shares, and ends with a configuration check.
 
 Every task runs from its own directory under `scripts/`, with `python -m src.<module>` or the matching `make` target. Some tasks need the local NER service from Baseline BM25 RAG running in a second terminal. Each task page says when.
 

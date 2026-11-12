@@ -17,6 +17,10 @@ from dotenv import load_dotenv
 
 # Curated 260-recipe sample shared by every ingest script (support/recipes/).
 RECIPES_SAMPLE_PATH = Path(__file__).resolve().parent.parent / "recipes" / "recipes_sample.json"
+# Synthetic intro / method / notes text for the same 260 recipes, keyed by recipe_id.
+# Chunking (common/chunking.py) splits this text and the recipe facts into the chunks
+# that every pipeline indexes and searches.
+RECIPES_SYNTHETIC_PATH = Path(__file__).resolve().parent.parent / "recipes" / "recipes_synthetic.json"
 
 _ENV_LOADED = False
 

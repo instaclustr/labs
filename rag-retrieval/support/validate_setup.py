@@ -44,8 +44,6 @@ TASK_DIRS = (
 # import name -> pip package name (only where they differ, for the hint)
 REQUIRED_MODULES = {
     "opensearchpy": "opensearch-py",
-    "bm25s": "bm25s",
-    "Stemmer": "PyStemmer",
     "flask": "flask",
     "dotenv": "python-dotenv",
     "requests": "requests",
@@ -55,6 +53,8 @@ REQUIRED_MODULES = {
     "tqdm": "tqdm",
     "numpy": "numpy",
     "spacy": "spacy",
+    "bm25s": "bm25s",
+    "Stemmer": "PyStemmer",
 }
 SPACY_MODEL = "en_core_web_sm"
 
@@ -75,7 +75,7 @@ def check_python() -> Result:
 def check_layout() -> Result:
     missing: List[str] = []
     for rel in ("README.md", "architecture.md", "support/requirements.txt", "support/.env.example",
-                "support/recipes/recipes_sample.json"):
+                "support/recipes/recipes_sample.json", "support/recipes/recipes_synthetic.json"):
         if not (LAB_ROOT / rel).is_file():
             missing.append(rel)
     for task in TASK_DIRS:
@@ -89,9 +89,34 @@ def check_layout() -> Result:
 
 
 def check_dependencies() -> Result:
-    missing = [pip for mod, pip in REQUIRED_MODULES.items() if importlib.util.find_spec(mod) is None]
+    import warnings
+
+    missing: List[str] = []
+    broken: List[str] = []
+    # Import the lab's own `common` package first. It sets up the environment every task relies on
+    # (a merged certificate bundle and a project-local Hugging Face cache) and must do so before
+    # huggingface_hub is imported, or the cache location is already fixed.
+    if str(SUPPORT_DIR) not in sys.path:
+        sys.path.insert(0, str(SUPPORT_DIR))
+    try:
+        importlib.import_module("common")
+    except Exception as exc:  # noqa: BLE001
+        broken.append(f"the lab's support/common package ({type(exc).__name__})")
+    for mod, pip in REQUIRED_MODULES.items():
+        if importlib.util.find_spec(mod) is None:
+            missing.append(pip)
+            continue
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")  # some packages emit harmless warnings when imported
+                importlib.import_module(mod)
+        except Exception as exc:  # noqa: BLE001 - an installed package that cannot be imported
+            broken.append(f"{pip} ({type(exc).__name__})")
     if missing:
         return False, "not installed: " + ", ".join(missing) + " (run: pip install -r support/requirements.txt)"
+    if broken:
+        return False, ("installed but cannot be imported: " + ", ".join(broken)
+                       + " (see troubleshooting/setup-environment.md)")
     return True, f"{len(REQUIRED_MODULES)} required packages importable"
 
 
@@ -127,14 +152,12 @@ def _settings():
 
 
 def check_env_file() -> Result:
-    # Match common.config: current directory, lab root, then support/.env.
+    # Same lookup order as common.config: the current directory first, then the lab root.
     if (Path.cwd() / ".env").is_file():
         where = "at the lab root" if Path.cwd().resolve() == LAB_ROOT else "in the current directory"
         return True, f".env found {where}"
     if (LAB_ROOT / ".env").is_file():
         return True, ".env found at the lab root"
-    if (SUPPORT_DIR / ".env").is_file():
-        return True, ".env found in support/"
     if os.getenv("LAB_CONTAINER", "").strip().lower() in ("1", "true", "yes", "on"):
         # Compose injects support/.env at runtime. It must not be baked into the
         # image or copied into the persistent workspace. Settings are checked next.
@@ -228,10 +251,10 @@ def check_opensearch() -> Result:
 
 
 def check_embeddings() -> Result:
-    from common.embeddings import EmbeddingModel  # noqa: WPS433
-
     settings = _settings()
     try:
+        from common.embeddings import EmbeddingModel  # noqa: WPS433
+
         model = EmbeddingModel(settings)
         vector = model.encode(["setup check"])[0]
     except Exception as exc:  # noqa: BLE001
