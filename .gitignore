@@ -6,19 +6,21 @@ __pycache__/
 *.pyc
 **/commands.txt
 
-# rag retrieval
+# LAB SPECIFIC
+## rag retrieval
 .lab-revision
 
-# agentic rag
+## agentic rag
 !.env.openai.example
 !.env.nebius.example
 validation-report*.json
 ai_media_dataset_20250911-1000lines.csv
 quarterly_filings
 
-## build
+### build
 agentic-rag/support/opensearch
 opensearch-users.csv
+commands.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

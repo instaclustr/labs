@@ -20,3 +20,5 @@
 | Engineer | Ramya Ravi | [ramyaravi1](https://github.com/ramyaravi1) |
 | Engineer | Brian Graf | [TheBrianGraf](https://github.com/TheBrianGraf) |
 | Engineer | Mariah McLaughlin | [mamclaughlin](https://github.com/mamclaughlin) |
+| Engineer | Walt Ribeiro | [waltribeiro](https://github.com/waltribeiro) |
+| Engineer | Paul Brebner | [paul-brebner](https://github.com/paul-brebner) |

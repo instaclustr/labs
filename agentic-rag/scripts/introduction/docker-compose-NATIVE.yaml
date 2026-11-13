@@ -1,6 +1,6 @@
 services:
   opensearch:
-    image: docker.io/davidvonthenen/netapp-instaclustr-agentic-lab-os:0.0.15
+    image: docker.io/davidvonthenen/netapp-instaclustr-agentic-lab-os:0.0.16
     container_name: opensearch-single
     environment:
       discovery.type: single-node
@@ -47,7 +47,7 @@ services:
         aliases: [opensearch-single-dashboards]
 
   lab:
-    image: docker.io/davidvonthenen/netapp-instaclustr-agentic-lab-dev:0.0.15
+    image: docker.io/davidvonthenen/netapp-instaclustr-agentic-lab-dev:0.0.16
     container_name: agentic-lab
     working_dir: /workspace/agentic-rag
     stdin_open: true
