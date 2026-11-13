@@ -194,7 +194,7 @@ def load_settings() -> Settings:
 def require_configured(settings: "Settings", *, need_bedrock: bool = True) -> None:
     """Fail fast with a clear message instead of a raw connection traceback.
 
-    Every pipeline calls this right after loading settings, so a missing .env
+    Every pipeline calls this right after loading settings, so missing values
     produces one actionable error instead of a urllib3/boto3 stack trace.
     """
     problems = []
@@ -218,10 +218,10 @@ def require_configured(settings: "Settings", *, need_bedrock: bool = True) -> No
 
     if problems:
         raise RuntimeError(
-            "Missing configuration in .env:\n  - "
+            "Missing configuration in the environment or optional .env:\n  - "
             + "\n  - ".join(problems)
-            + "\n\nCopy support/.env.example to .env at the repo root and fill in your "
-            "Instaclustr OpenSearch and AWS Bedrock credentials, then try again."
+            + "\n\nExport the required values in your shell or use insta config. "
+            "For manual runs, support/.env.example can also be copied to the lab-root .env."
         )
 
 

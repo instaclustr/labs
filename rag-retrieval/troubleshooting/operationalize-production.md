@@ -33,7 +33,7 @@ Step 2 starts `ner_service.py` (from `scripts/baseline-bm25-rag/`), which needs 
 python -m spacy download en_core_web_sm
 ```
 
-If that command itself fails with `ERROR: Invalid requirement: '==en_core_web_sm'`, see the [setup troubleshooting entry](setup-environment.md#oserror-e050-cant-find-model-en_core_web_sm), which explains the `click` version cause.
+If the model download or load fails, follow the [setup troubleshooting entry](setup-environment.md#oserror-e050-cant-find-model-en_core_web_sm) to install a model compatible with the current spaCy version and check the environment's dependencies.
 
 ### `CERTIFICATE_VERIFY_FAILED: unable to get local issuer certificate`
 

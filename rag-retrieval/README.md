@@ -57,7 +57,7 @@ before they show up in production, not after.
 
 | This Lab | Local Laptop | CLI | Notebook | Videos |
 | --- | --- | --- | --- | --- |
-| **RAG Developer Journey** | [Getting Started](#getting-started) | _Coming soon:_<br>Codex<br>Claude<br>Cursor | _Coming soon_ | _Coming soon_ |
+| **RAG Developer Journey** | [Getting Started](#getting-started) | [Coding assistants](#learn-with-codex-claude-code-or-cursor) | _Coming soon_ | _Coming soon_ |
 
 ## Tasks
 
@@ -65,7 +65,7 @@ These tasks are cumulative in setup and independent in content: Task 1 prepares 
 
 | Task | Description | Hands-on Lab |
 | --- | --- | --- |
-| **1. Prepare the workspace** | Create the Python environment, install the shared dependencies, and configure OpenSearch and your LLM provider in one `.env`, then run the setup check. | [Start](tasks/setup-environment.md) |
+| **1. Prepare the workspace** | Create the Python environment, install the shared dependencies, and configure OpenSearch and your LLM provider through the shell or an optional `.env`, then run the setup check. | [Start](tasks/setup-environment.md) |
 | **2. Baseline Vector RAG** | Plain kNN vector search. Shows vector search retrieving similar-sounding recipes instead of the right one. | [Start](tasks/baseline-vector-rag.md) |
 | **3. Baseline BM25 RAG** | BM25 keyword matching, plus a small boost from a local NER (entity-tagging) service. Fixes vector search confusing semantically-similar-but-factually-different questions: keyword matching on the recipe name retrieves both same-named recipes, and the NER boost only adds a nudge. | [Start](tasks/baseline-bm25-rag.md) |
 | **4. Hybrid RAG (Native)** | Server-side BM25+kNN fusion via a native OpenSearch search pipeline, one index. Retrieves both same-named recipes with no separate NER microservice. | [Start](tasks/hybrid-rag-native.md) |
@@ -89,7 +89,7 @@ Setup problems: [`troubleshooting/setup-environment.md`](troubleshooting/setup-e
 
 ## Getting Started
 
-This lab is the `rag-retrieval/` folder of the [instaclustr/labs](https://github.com/instaclustr/labs) repository; Task 1 shows how to clone it. You need Python 3.10 or newer; Python 3.12 is the default recommended version. The only accounts you need are an [Instaclustr](https://www.instaclustr.com/) OpenSearch cluster and one LLM provider, either AWS Bedrock with model access enabled or an OpenAI-compatible API key. Task 1 walks through the environment, the dependencies, and the one `.env` file every task shares, and ends with a configuration check.
+This lab is the `rag-retrieval/` folder of the [instaclustr/labs](https://github.com/instaclustr/labs) repository; Task 1 shows how to clone it. Use Python 3.12; the current dependency set supports Python 3.10–3.14. The only accounts you need are an [Instaclustr](https://www.instaclustr.com/) OpenSearch cluster and one LLM provider, either AWS Bedrock with model access enabled or an OpenAI-compatible API key. Task 1 walks through the environment, the dependencies, and the environment settings every task shares, and ends with a configuration check.
 
 Every task runs from its own directory under `scripts/`, with `python -m src.<module>` or the matching `make` target. Some tasks need the local NER service from Baseline BM25 RAG running in a second terminal. Each task page says when.
 
@@ -97,7 +97,38 @@ Every task runs from its own directory under `scripts/`, with `python -m src.<mo
 
 ## Learn with Codex, Claude Code, or Cursor
 
-Coming Soon
+Open the complete `rag-retrieval/` folder in your coding tool. The human task
+pages, source maps, and code are also the template that an agent uses to explain
+the lab, make a scoped change, or build a retrieval project for another corpus.
+
+Start with [AGENTS.md](AGENTS.md) and
+[Using this workshop as a project template](USING_THE_TEMPLATE.md). The
+[task manifest](references/lab.json) records exact working directories,
+command arguments, prerequisites, side effects, and acceptance conditions.
+The [agent runtime contract](references/agent-contracts.md) explains how to
+interpret the existing commands and which operations modify resources.
+
+Codex can use the repository-local `instaclustr-rag-builder` Skill under
+[`.agents/skills/`](.agents/skills/instaclustr-rag-builder/SKILL.md). For example:
+
+```text
+Use $instaclustr-rag-builder to help me build a project from this workshop.
+Read USING_THE_TEMPLATE.md and the relevant source before editing. Help me
+select a retrieval pattern for my corpus, implement the scoped adaptation,
+and verify the result using the existing commands and documented effects.
+```
+
+For another coding tool, explicitly ask it to read `AGENTS.md`, the local
+Skill's Markdown, and the selected task's source map. Automatic instruction
+discovery depends on the client. The guide includes
+[portable and project-building prompts](USING_THE_TEMPLATE.md#7-prompts-for-coding-tools).
+
+Before connecting to services, install `support/requirements-test.txt` in the
+selected environment and run `python scripts/validate_lab.py` from the lab
+root. It checks the local documentation and metadata; task `make validate`
+commands remain separate live checks. See the
+[validation report](VALIDATION_REPORT.md) for executed checks and client/runtime
+verification boundaries. This revision includes `insta.yaml` and `deploy-opensearch.json` for the Go `insta` CLI. See [INSTA.md](INSTA.md) for the CLI route, including how its pinned source relates to this replacement package. The manual Python commands remain supported.
 
 ## Jupyter Notebook
 

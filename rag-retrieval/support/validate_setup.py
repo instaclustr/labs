@@ -65,8 +65,8 @@ def check_python() -> Result:
     found = sys.version_info[:3]
     text = ".".join(str(p) for p in found)
     recommended = ".".join(str(p) for p in RECOMMENDED_PYTHON)
-    if found < MIN_PYTHON + (0,):
-        return False, f"Python {text} found; Python 3.10+ is required (3.12 recommended)"
+    if found < MIN_PYTHON + (0,) or found >= (3, 15, 0):
+        return False, f"Python {text} found; Python 3.10-3.14 is supported (3.12 recommended)"
     if found[:2] == RECOMMENDED_PYTHON:
         return True, f"Python {text} (recommended version)"
     return True, f"Python {text}; Python {recommended} is the default recommended version"
@@ -127,19 +127,17 @@ def _settings():
 
 
 def check_env_file() -> Result:
-    # Match common.config: current directory, lab root, then support/.env.
+    # Files are optional: the current shell has precedence in common.config.
     if (Path.cwd() / ".env").is_file():
         where = "at the lab root" if Path.cwd().resolve() == LAB_ROOT else "in the current directory"
         return True, f".env found {where}"
     if (LAB_ROOT / ".env").is_file():
         return True, ".env found at the lab root"
-    if (SUPPORT_DIR / ".env").is_file():
-        return True, ".env found in support/"
     if os.getenv("LAB_CONTAINER", "").strip().lower() in ("1", "true", "yes", "on"):
         # Compose injects support/.env at runtime. It must not be baked into the
         # image or copied into the persistent workspace. Settings are checked next.
         return True, "runtime environment mode; required settings are checked separately"
-    return False, ".env not found (copy support/.env.example to .env at the lab root and fill it in)"
+    return True, ".env is optional; required settings are checked from the current environment"
 
 
 def check_configuration() -> Result:
@@ -151,7 +149,9 @@ def check_configuration() -> Result:
         require_configured(settings)
     except RuntimeError as exc:
         # The message names missing settings only; it never contains values.
-        first = str(exc).split("\n\n")[0].replace("Missing configuration in .env:\n  - ", "")
+        first = str(exc).split("\n\n")[0].replace(
+            "Missing configuration in the environment or optional .env:\n  - ", ""
+        )
         return False, "missing or unrecognized: " + first.replace("\n  - ", "; ")
     return True, "required OpenSearch and LLM settings are present"
 
@@ -286,7 +286,7 @@ def main() -> int:
 
     for name, fn in checks:
         results.append(run(name, fn))
-    env_ok = results[2] and results[4]  # dependencies + env file
+    env_ok = results[2]  # dependencies; an .env file is optional
 
     if env_ok:
         config_ok = run("configuration", check_configuration)
@@ -302,7 +302,7 @@ def main() -> int:
             if args.check_ner:
                 results.append(run("ner", check_ner))
     else:
-        print("[SKIP] configuration: needs the dependencies and a .env file first")
+        print("[SKIP] configuration: install the required dependencies first")
         results.append(False)
         if args.check_opensearch:
             print("[SKIP] opensearch: needs a valid configuration first")

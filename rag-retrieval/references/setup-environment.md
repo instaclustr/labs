@@ -8,7 +8,7 @@
 | --- | --- |
 | Python | A local virtual environment at the lab root (`.venv`). Python 3.12 is the default recommended version. `.python-version` selects 3.12 for tools that read it. Dependencies must also support the chosen interpreter and platform; spaCy 3.8.16 currently declares Python >=3.9,<3.15, so the current dependency set does not promise Python 3.15+ installation. |
 | Dependencies | One shared set in `support/requirements.txt`, plus spaCy's `en_core_web_sm` model for the NER service. spaCy is pinned to 3.8.16, the latest stable release verified on October 14, 2026. The official OpenAI Python SDK is included. The obsolete setuptools and click caps are removed, and NumPy 2 is allowed. Download the English model again after upgrading an existing environment. |
-| Configuration | One `.env` at the lab root, copied from `support/.env.example`. `load_settings()` reads the first file found: `./.env` relative to the current directory, the lab-root `.env`, then `support/.env`. Existing environment variables take precedence. |
+| Configuration | One `.env` at the lab root, copied from `support/.env.example`. `load_settings()` uses `_load_env_once()` to load the first file found: `./.env` relative to the current directory, then the lab-root `.env`. Existing environment variables take precedence. |
 | OpenSearch | One Instaclustr cluster shared by every task; each task uses its own index names. On a cluster shared with other people, override the six `OPENSEARCH_*_INDEX` names in `.env` with a suffix (see Task 1, step 3). The `hybrid-search-pipeline` search pipeline and the `recipes-audit-log-retention` ISM policy have fixed names and are shared per cluster. |
 | LLM | Amazon Bedrock (`LLM_PROVIDER=bedrock`, default) or an OpenAI-compatible endpoint (`LLM_PROVIDER=openai`, via the official OpenAI Python SDK). |
 | Local services | The NER service from Baseline BM25 RAG on `127.0.0.1:8000`; no other local service. |
@@ -16,6 +16,8 @@
 | Working directory | Every task runs from its own `scripts/<task-id>/` directory, with `python -m src.<module>` or `make <target>`. |
 
 Keep `.env` out of anything you share: it holds your OpenSearch password and LLM credentials.
+
+The setup check's `env-file` probe also recognizes `support/.env` and container runtime configuration, but that does not add another dotenv search path. [`support/docker-compose.yaml`](../support/docker-compose.yaml) injects `support/.env` through `env_file`; native task commands should use the lab-root `.env`. A file at `support/.env` is loaded directly only when `support/` is the current directory.
 
 ## Source map
 
