@@ -103,7 +103,7 @@ Terminal 1 (a new terminal opened in the lab root; NER service, stays running â€
 
 ```bash
 source .venv/bin/activate
-cd scripts/baseline-bm25-rag
+cd scripts/hybrid-rag-ner-rerank
 python -m src.ner_service
 ```
 
@@ -258,6 +258,6 @@ The [Hybrid RAG (NER + Rerank) source map](../references/hybrid-rag-ner-rerank.m
 for common fixes -- including what to check if `ner_service.py` isn't
 running (entity matching silently degrades to plain full-text matching
 rather than erroring), missing `.env` values, certificate errors, and
-Bedrock model access.
+LLM-provider model access.
 
 Continue to [Task 6: Governance Tiering](governance-tiering.md), or return to the [task index](../README.md#tasks).

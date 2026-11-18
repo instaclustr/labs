@@ -102,7 +102,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         raise FileNotFoundError(f"{data_file} not found. See tasks/hybrid-rag-ner-rerank.md.")
 
     settings = load_settings()
-    require_configured(settings, need_bedrock=False)
+    require_configured(settings)
     bm25_index = args.bm25_index_name or settings.opensearch_recipe_bm25_index
     vector_index = args.vector_index_name or settings.opensearch_recipe_vector_index
 

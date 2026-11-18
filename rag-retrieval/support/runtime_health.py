@@ -1,6 +1,6 @@
 # Copyright 2026 NetApp Instaclustr contributors. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-"""Keep the development container alive after its offline setup check passes.
+"""Keep the development container alive and expose a liveness endpoint.
 
 GET /healthz reports container liveness, not remote OpenSearch/LLM access or
 NER readiness. It never invokes a model, downloads weights or writes indexes.

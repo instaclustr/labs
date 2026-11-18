@@ -3,8 +3,8 @@
 A hands-on, seven-task walkthrough of RAG (retrieval-augmented generation)
 architectures: a workspace setup, five retrieval architectures that each fix a
 concrete, verified failure of the one before it, and a production-hardening pass. Every task is runnable end-to-end against a real Instaclustr
-OpenSearch cluster and an LLM (Amazon Bedrock, or any OpenAI-compatible
-endpoint if you don't have AWS access), on a real (if small and curated)
+OpenSearch cluster and an LLM (OpenAI-compatible generation by default,
+the Anthropic API, or Anthropic Claude through Amazon Bedrock), on a real (if small and curated)
 dataset — not a slide deck.
 
 The running theme is a **"Recipe & Dietary Safety Assistant"**: a system
@@ -57,7 +57,7 @@ before they show up in production, not after.
 
 | This Lab | Local Laptop | CLI | Notebook | Videos |
 | --- | --- | --- | --- | --- |
-| **RAG Developer Journey** | [Getting Started](#getting-started) | _Coming soon:_<br>Codex<br>Claude<br>Cursor | _Coming soon_ | _Coming soon_ |
+| **RAG Developer Journey** | [Getting Started](#getting-started) | Coming Soon! | _Coming soon_ | _Coming soon_ |
 
 ## Tasks
 
@@ -91,7 +91,7 @@ Setup problems: [`troubleshooting/setup-environment.md`](troubleshooting/setup-e
 
 ## Getting Started
 
-This lab is the `rag-retrieval/` folder of the [instaclustr/labs](https://github.com/instaclustr/labs) repository; Task 1 shows how to clone it. You need Python 3.10 or newer; Python 3.12 is the default recommended version. The only accounts you need are an [Instaclustr](https://www.instaclustr.com/) OpenSearch cluster and one LLM provider, either AWS Bedrock with model access enabled or an OpenAI-compatible API key (Bedrock is the path tested end to end; see Task 1 for the OpenAI note). Task 1 walks through the environment, the dependencies, and the one `.env` file every task shares, and ends with a configuration check.
+This lab is the `rag-retrieval/` folder of the [instaclustr/labs](https://github.com/instaclustr/labs) repository; Task 1 shows how to clone it. You need Python 3.10 or newer; Python 3.12 is the default recommended version. You need an [Instaclustr](https://www.instaclustr.com/) OpenSearch cluster and one LLM provider: OpenAI or an OpenAI-compatible endpoint (`LLM_PROVIDER=openai`, the default), the Anthropic API (`anthropic`), or Anthropic Claude through AWS Bedrock (`bedrock`). Task 1 maps each provider to its credentials and model setting, prepares the shared environment, and ends with a configuration check. Current adapter verification and live-test boundaries are recorded in [VALIDATION_REPORT.md](VALIDATION_REPORT.md).
 
 Every task runs from its own directory under `scripts/`, with `python -m src.<module>` or the matching `make` target. Some tasks need the local NER service from Baseline BM25 RAG running in a second terminal. Each task page says when.
 
@@ -99,7 +99,7 @@ Every task runs from its own directory under `scripts/`, with `python -m src.<mo
 
 ## Learn with Codex, Claude Code, or Cursor
 
-Coming Soon
+Coming Soon!
 
 ## Jupyter Notebook
 

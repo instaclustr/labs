@@ -26,9 +26,15 @@ VECTOR_FIELD = "embedding"
 def create_client(settings: Optional[Settings] = None) -> OpenSearch:
     """Create the OpenSearch client used by every pipeline."""
     settings = settings or load_settings()
+
+    # assume production using SSL
+    ssl = True
     http_auth = None
     if settings.opensearch_user and settings.opensearch_password:
         http_auth = (settings.opensearch_user, settings.opensearch_password)
+    else:
+        # if we don't have creds, it's a safe assumption we are running a local instance with security disabled
+        ssl = False
 
     LOGGER.info(
         "Connecting to OpenSearch at %s:%s (ssl=%s)",
@@ -39,9 +45,9 @@ def create_client(settings: Optional[Settings] = None) -> OpenSearch:
     return OpenSearch(
         hosts=[{"host": settings.opensearch_host, "port": settings.opensearch_port}],
         http_auth=http_auth,
-        use_ssl=settings.opensearch_ssl,
-        verify_certs=settings.opensearch_ssl,
-        ssl_show_warn=settings.opensearch_ssl,
+        use_ssl=ssl,
+        verify_certs=ssl,
+        ssl_show_warn=True,
         timeout=60,
         max_retries=3,
         retry_on_timeout=True,

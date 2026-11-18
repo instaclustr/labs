@@ -58,7 +58,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         raise FileNotFoundError(f"{data_file} not found. See tasks/hybrid-rag-native.md.")
 
     settings = load_settings()
-    require_configured(settings, need_bedrock=False)
+    require_configured(settings)
     index_name = args.index_name or settings.opensearch_hybrid_index
 
     client = create_client(settings)

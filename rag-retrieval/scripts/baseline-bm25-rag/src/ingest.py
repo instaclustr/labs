@@ -51,7 +51,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         raise FileNotFoundError(f"{data_file} not found. See tasks/baseline-bm25-rag.md.")
 
     settings = load_settings()
-    require_configured(settings, need_bedrock=False)
+    require_configured(settings)
     client = create_client(settings)
     ner = NERClient(settings)
     index_name = args.index_name or settings.opensearch_bm25_recipes_baseline_index
